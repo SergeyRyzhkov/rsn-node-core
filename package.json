@@ -1,7 +1,7 @@
 {
-  "name": "rsn-node-core",
-  "version": "1.0.2",
-  "description": "Sergey Ryzhkov core node platform",
+  "name": "rsn-express-core",
+  "version": "1.0.1",
+  "description": "Sergey Ryzhkov core Express (node) platform",
   "main": "dist/main.bundle.js",
   "types": "dist/main.bundle.d.ts",
   "repository": "git@github.com:SergeyRyzhkov/rsn-node-core",
