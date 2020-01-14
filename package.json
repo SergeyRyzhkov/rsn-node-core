@@ -1,12 +1,17 @@
 {
-  "name": "rutorgi",
-  "version": "1.0.0",
-  "description": "Russian Gov Torgi Service",
+  "name": "rsn-node-core",
+  "version": "1.0.2",
+  "description": "Sergey Ryzhkov core node platform",
+  "main": "dist/main.bundle.js",
+  "types": "dist/main.bundle.d.ts",
+  "repository": "git@github.com:SergeyRyzhkov/rsn-node-core",
+  "author": "Sergey Ryzhkov <SergeyRyzhkov76@gmail.com>",
+  "license": "MIT",
   "scripts": {
     "build:dev": "cross-env NODE_ENV=development webpack --config webpack.config.js",
     "build:prod": "cross-env NODE_ENV=production webpack --config webpack.config.js",
     "dev": "webpack-dev-server --inline --hot --progress --port 3000",
-    "doc": "typedoc --out docs/src/ --readme ./README.md"
+    "doc": "typedoc --out docs/src/ --readme ./API.md"
   },
   "devDependencies": {
     "@babel/core": "^7.6.3",
@@ -57,11 +62,11 @@
   },
   "dependencies": {
     "@sindresorhus/slugify": "latest",
-    "bcrypt": "latest",
+    "bcrypt": "3.0.6",
     "body-parser": "latest",
     "camelcase-keys": "latest",
     "class-transformer": "latest",
-    "compression": "^1.7.4",
+    "compression": "latest",
     "cookie-parser": "latest",
     "cors": "latest",
     "cuid": "latest",
@@ -84,14 +89,10 @@
     "request": "latest",
     "request-promise": "latest",
     "request-promise-native": "latest",
-    "response-time": "latest",
     "routing-controllers": "latest",
     "routing-controllers-openapi": "latest",
     "typeorm": "latest",
     "winston": "latest",
-    "puppeteer": "latest",
-    "proxy-lists": "latest",
-    "proxy-verifier": "latest",
-    "https-proxy-agent": "latest"
+    "puppeteer": "latest"
   }
 }

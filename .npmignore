@@ -2,12 +2,14 @@
 node_modules
 # logs
 npm-debug.log
-# dist
-dist
+# src
+src
 # debug
 debug
 # config
 config
+# mail
+mail
 static
 log
 /.vscode
@@ -16,7 +18,11 @@ package-lock*
 assets
 test
 examples
-.eslintrc
+.eslintrc*
+.babelrc
 .gitignore
 .github/
-.npmrc
+tslint*
+tsconfig*
+webpack*
+

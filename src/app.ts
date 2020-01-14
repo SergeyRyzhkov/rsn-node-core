@@ -1,6 +1,6 @@
 import * as express from 'express';
 import * as cors from 'cors';
-import * as responseTime from 'response-time';
+// import * as responseTime from 'response-time';
 import * as bodyParser from 'body-parser';
 import * as passport from 'passport';
 import * as compression from 'compression'
@@ -32,7 +32,7 @@ export default class Application {
     if (AppConfig.serverConfig.useCors) {
       app.use(cors());
     }
-    app.use(responseTime());
+    // app.use(responseTime());
     // app.use(compression({ threshold: 0 }));
     app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
     app.use(bodyParser.json({ limit: '50mb' }));
