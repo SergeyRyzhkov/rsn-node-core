@@ -1,20 +1,72 @@
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+const {
+  CleanWebpackPlugin
+} = require('clean-webpack-plugin');
 const NodeExternals = require('webpack-node-externals');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const path = require('path');
+const fs = require('fs')
 
 const paths = {
   src: path.resolve(__dirname, 'src'),
   debug: path.resolve(__dirname, 'debug'),
-  dist: path.resolve(__dirname, 'dist')
+  dist: path.resolve(__dirname, 'dist'),
+  types: path.resolve(__dirname, 'types')
+};
+const entryFileName = path.join(paths.src, "ExpressApplication.ts");
+const outProductionBundleFileName = 'index.js';
+const outDevBundleFileName = 'index.dev.js';
+
+
+class RsnDeleteFolderPlugin {
+  apply(compiler) {
+    compiler.hooks.beforeRun.tap('RsnDeleteFolderPlugin', () => {
+      fs.rmdirSync(paths.types, {
+        recursive: true
+      });
+    });
+  }
 };
 
+class RsnGenDtsIndexPlugin {
+  constructor() {
+    this.importSt = ''
+  }
 
-const entryFileName = path.join(paths.src, "server.ts");
+  apply(compiler) {
+    compiler.hooks.done.tap('RsnGenDtsIndexPlugin', () => {
+      this.processFolder(paths.types)
+      this.writeDtsIndexFile()
+    });
+  }
 
-//const outProductionBundleFileName = '[name].bundle.[hash].js';
-const outProductionBundleFileName = '[name].bundle.js';
-const outDevBundleFileName = '[name].js';
+  processFolder(folderPath) {
+    fs.readdirSync(folderPath).forEach((file, index) => {
+      const curPath = path.join(folderPath, file);
+      if (fs.lstatSync(curPath).isDirectory()) {
+        this.processFolder(curPath);
+      } else {
+        this.processFile(curPath)
+      }
+    });
+  }
+
+  processFile(filePath) {
+    // let fromImort = filePath.replace(paths.types, '').replace(/path.delimiter/g, '/').replace(/@/g, '.').replace('.d.ts', '')
+    // pass this variable in to my regex string
+    let fromImort = filePath.replace(paths.types, '').replace(/@/g, '.').replace('.d.ts', '').split(path.sep).join('/')
+    this.importSt = this.importSt + `export * from '.${fromImort}'` + '\n';
+    console.log(path.sep)
+  }
+
+  writeDtsIndexFile() {
+    let indexPath = path.resolve(paths.types, 'index.d.ts')
+    if (fs.existsSync(indexPath)) {
+      fs.unlinkSync(indexPath);
+    }
+    fs.writeFileSync(indexPath, this.importSt)
+  }
+};
+
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 const {
@@ -87,35 +139,21 @@ let config = {
         loader: 'ts-loader',
         exclude: /node_modules/,
         options: {
-          transpileOnly: true,
+          configFile: "tsconfig.json",
           happyPackMode: false,
           experimentalWatchApi: true
         }
-      },
-
-      {
-        test: /\.js$/,
-        enforce: 'pre',
-        loader: 'standard-loader',
-        options: {
-          typeCheck: true,
-          emitErrors: false,
-          fix: true
-        },
-        exclude: /node_modules/
       }
     ]
   },
 
   plugins: removeEmpty([
-
     new ForkTsCheckerWebpackPlugin({
       checkSyntacticErrors: true
     }),
-    new CleanWebpackPlugin()
-
-    // new webpack.ProgressPlugin(handler)
-
+    new CleanWebpackPlugin(),
+    new RsnDeleteFolderPlugin(),
+    new RsnGenDtsIndexPlugin()
   ])
 
 };

@@ -1,4 +1,4 @@
-import AppConfig from '@/utils/Config';
+import AppConfig from './utils/Config';
 
 const ClientAppConfig = {
 

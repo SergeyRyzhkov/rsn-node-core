@@ -46,7 +46,7 @@ export default class AuthService extends BaseService {
           throw new UserSessionExpiredException('Session not found');
         }
 
-        if (await ServiceContainer.UserSessionService.isExpired(session)) {
+        if (ServiceContainer.UserSessionService.isExpired(session)) {
           ServiceContainer.UserSessionService.delete(sessionToken);
           throw new UserSessionExpiredException('Session is expired');
         }
@@ -119,7 +119,7 @@ export default class AuthService extends BaseService {
 
       // Профиля в базе нет, Почты нет или не нашли в базе, но аутентификация через соц сеть прошла
       if (logonResult.logonStatus === LogonStatus.Unknown && !appUser && socialNetworkName) {
-        sessionUser = await ServiceContainer.UserService.convertProfileToSessionUser(authStrategyType, profile)
+        sessionUser = ServiceContainer.UserService.convertProfileToSessionUser(authStrategyType, profile)
         logonResult.makeUserNotFoundButSocialNetworkAuthOk(sessionUser, socialNetworkName);
       }
 
@@ -127,7 +127,7 @@ export default class AuthService extends BaseService {
       if (logonResult.logonStatus === LogonStatus.Unknown && appUser) {
         const userSocProfile = await ServiceContainer.UserService.linkToSocialNetwork(appUser.appUserId, authStrategyType, profile);
         if (userSocProfile) {
-          sessionUser = await ServiceContainer.UserService.convertAppUserSocialNetProfileToSessionUser(userSocProfile);
+          sessionUser = ServiceContainer.UserService.convertAppUserSocialNetProfileToSessionUser(userSocProfile);
           sessionUser.appUserRegVerifiedInd = appUser.appUserRegVerifiedInd;
           sessionUser.appUserRegDate = appUser.appUserRegDate;
           logonResult.makeOKResult(sessionUser);

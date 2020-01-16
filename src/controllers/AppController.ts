@@ -2,10 +2,9 @@ import { BaseController } from './BaseController';
 import { Response } from 'express';
 import ClientAppConfig from '@/ClientAppConfig';
 import AppConfig from '@/utils/Config';
-import { JsonController, Get, Res, getMetadataArgsStorage, UseBefore, Post, Put, Body } from 'routing-controllers';
+import { JsonController, Get, Res, getMetadataArgsStorage, UseBefore } from 'routing-controllers';
 import { routingControllersToSpec } from 'routing-controllers-openapi'
 import { authorized } from '@/middlewares/AuthorizeMiddleware';
-import ServiceContainer from '@/services/ServiceContainer';
 
 @JsonController('/app')
 export default class AppController extends BaseController {

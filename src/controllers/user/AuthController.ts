@@ -1,4 +1,4 @@
-import { BaseController } from '../BaseController';
+import { BaseController } from '@/controllers/BaseController';
 import * as passport from 'passport';
 import { Request, Response } from 'express';
 import { LogonResult, LogonStatus } from '@/entities/users/LogonResult';
