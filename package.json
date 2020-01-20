@@ -13,7 +13,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.8.3",
-    "@types/bcrypt": "latest",
     "@types/compression": "latest",
     "@types/express": "latest",
     "@types/express-session": "latest",
@@ -27,7 +26,6 @@
     "@types/passport-jwt": "latest",
     "@types/passport-local": "latest",
     "class-validator": "^0.11.0",
-    "clean-webpack-plugin": "latest",
     "cross-env": "latest",
     "eslint": "latest",
     "fork-ts-checker-webpack-plugin": "latest",

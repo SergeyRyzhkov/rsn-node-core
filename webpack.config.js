@@ -1,6 +1,3 @@
-const {
-  CleanWebpackPlugin
-} = require('clean-webpack-plugin');
 const NodeExternals = require('webpack-node-externals');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const path = require('path');
@@ -20,10 +17,18 @@ const outDevBundleFileName = 'index.dev.js';
 class RsnDeleteFolderPlugin {
   apply(compiler) {
     compiler.hooks.beforeRun.tap('RsnDeleteFolderPlugin', () => {
-      fs.rmdirSync(paths.types, {
+      this.remodeFolder(paths.types);
+      this.remodeFolder(paths.dist);
+      this.remodeFolder(paths.debug);
+    });
+  }
+
+  remodeFolder(folderPath) {
+    if (fs.existsSync(folderPath)) {
+      fs.rmdirSync(folderPath, {
         recursive: true
       });
-    });
+    }
   }
 };
 
@@ -51,11 +56,12 @@ class RsnGenDtsIndexPlugin {
   }
 
   processFile(filePath) {
-    // let fromImort = filePath.replace(paths.types, '').replace(/path.delimiter/g, '/').replace(/@/g, '.').replace('.d.ts', '')
-    // pass this variable in to my regex string
-    let fromImort = filePath.replace(paths.types, '').replace(/@/g, '.').replace('.d.ts', '').split(path.sep).join('/')
+    const contents = fs.readFileSync(filePath, 'utf8');
+    const newContents = contents.replace(paths.types, '').replace(/@/g, '.');
+    fs.writeFileSync(filePath, newContents, 'utf8');
+
+    const fromImort = filePath.replace(paths.types, '').replace(/@/g, '.').replace('.d.ts', '').split(path.sep).join('/')
     this.importSt = this.importSt + `export * from '.${fromImort}'` + '\n';
-    console.log(path.sep)
   }
 
   writeDtsIndexFile() {
@@ -151,7 +157,6 @@ let config = {
     new ForkTsCheckerWebpackPlugin({
       checkSyntacticErrors: true
     }),
-    new CleanWebpackPlugin(),
     new RsnDeleteFolderPlugin(),
     new RsnGenDtsIndexPlugin()
   ])

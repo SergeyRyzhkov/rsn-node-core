@@ -11,59 +11,105 @@ import { headerMiddleware } from './middlewares/HeaderMiddleware';
 import { errorMiddleware } from './middlewares/ErrorMiddleware';
 import ServiceContainer from './services/ServiceContainer';
 import { refreshAccessToken } from './middlewares/AuthorizeMiddleware';
-import { appControllers } from './controllers';
 import ClientAppConfig from '@/ClientAppConfig';
 import { logger } from './utils/Logger';
+import { BaseController } from './controllers/BaseController';
+import AppController from './controllers/AppController';
+import AuthController from './controllers/user/AuthController';
+import UserController from './controllers/user/UserController';
+import ExpressApplicationHooks from './ExpressApplicationHooks';
+import { AppUser } from './entities/users/AppUser';
+import { AppUserSession } from './entities/users/AppUserSession';
+import { AppUserSocialNetProfile } from './entities/users/AppUserSocialNetProfile';
 
 export default class ExpressApplication {
+  private hooks: ExpressApplicationHooks;
+  private app = express();
+  private appControllers: Array<typeof BaseController> = [AppController, AuthController, UserController];
+  private ormEntityModelMetadata: any[] = [AppUser, AppUserSession, AppUserSocialNetProfile];
 
-  public async start () {
+  public async start (appHooks?: ExpressApplicationHooks) {
+    this.hooks = appHooks || new ExpressApplicationHooks();
+
     try {
       const expressApp = await this.initialize();
+
       const port = process.env.PORT || AppConfig.serverConfig.port;
       expressApp.listen(port);
-      logger.info(`Server running on port ${port} in ${process.env.NODE_ENV}`);
       process.send('ready');
+
+      logger.info(`Server running on port ${port} in ${process.env.NODE_ENV}`);
     } catch (exc) {
       logger.error(exc);
       process.send('stop');
     }
   }
 
+  public getExpressApp () {
+    return this.app;
+  }
+
+  public getAppConfig () {
+    return AppConfig;
+  }
+
+  public addAppControllers (controllers: Array<typeof BaseController>) {
+    this.appControllers = [...this.appControllers, ...controllers];
+  }
+
+  public addOrmEntityModelMetadata (antityList: []) {
+    this.ormEntityModelMetadata = [...this.ormEntityModelMetadata, ...antityList];
+  }
+
+  public getTypeOrmManager () {
+    return TypeOrmManager;
+  }
+
   private async initialize () {
-    const app = express();
 
-    // FIXME: Через конфиг или отдельные методы
-    await TypeOrmManager.initConnection();
-    ServiceContainer.PassportProviders.initialize(ClientAppConfig);
+    this.hooks.beforInitialize(this);
 
-    app.set('trust proxy', 1);
-    app.use(helmet());
-    app.use(helmet.noCache());
+    this.hooks.beforTypeOrmInitialize(this);
+    if (!!AppConfig.typeOrm) {
+      await TypeOrmManager.initConnection(AppConfig.typeOrm, this.ormEntityModelMetadata);
+    }
+    this.hooks.afterTypeOrmInitialize(this)
+
+    this.app.set('trust proxy', 1);
+    this.app.use(helmet());
+    this.app.use(helmet.noCache());
 
     if (AppConfig.serverConfig.useCors) {
-      app.use(cors());
+      this.app.use(cors());
     }
-    // app.use(responseTime());
-    // app.use(compression({ threshold: 0 }));
-    // FIXME: Размер через конфиг
-    app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
-    app.use(bodyParser.json({ limit: '50mb' }));
 
-    app.use(passport.initialize());
+    const limit = AppConfig.serverConfig.bodyParserLimit || '50mb'
+    this.app.use(bodyParser.urlencoded({ limit, extended: true }));
+    this.app.use(bodyParser.json({ limit }));
+
+    this.hooks.beforPassportInitialize(this);
+    // FIXME: Через конфиг или отдельные методы
+    ServiceContainer.PassportProviders.initialize(ClientAppConfig);
+    this.app.use(passport.initialize());
+    this.hooks.afterPassportInitialize(this);
 
     // FIXME: работу с токенами через конфиг (надо или нет)  или отдельные методы
-    app.use(refreshAccessToken());
-    app.use(headerMiddleware());
+    this.app.use(refreshAccessToken());
 
-    useExpressServer(app, {
+    this.app.use(headerMiddleware());
+
+    this.hooks.beforRoutingControllersInitialize(this)
+    useExpressServer(this.app, {
       routePrefix: AppConfig.serverConfig.restApiEndPoint,
-      controllers: appControllers
+      controllers: this.appControllers
     });
+    this.hooks.afterRoutingControllersInitialize(this);
 
-    app.use(errorMiddleware());
+    this.app.use(errorMiddleware());
 
-    return app;
+    this.hooks.initialized(this);
+
+    return this.app;
   }
 }
 

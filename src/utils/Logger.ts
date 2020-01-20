@@ -7,24 +7,21 @@ if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir);
 }
 
+
 export const logger = winston.createLogger({
   exitOnError: false,
-
+  level: 'info',
+  format: winston.format.json(),
+  defaultMeta: { service: 'user-service' },
   transports: [
-    new winston.transports.File({
-      filename: `${logDir}/log.json`,
-      level: 'info',
-      format: winston.format.json(),
-      handleExceptions: true
-    }),
-
-    new winston.transports.Console({
-      level: 'debug',
-      handleExceptions: true,
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple()
-      )
-    }),
-  ],
+    new winston.transports.File({ filename: `${logDir}/error.log`, level: 'error' }),
+    new winston.transports.File({ filename: `${logDir}/combined.log` })
+  ]
 });
+
+if (process.env.NODE_ENV !== 'production') {
+  logger.add(new winston.transports.Console({
+    format: winston.format.simple()
+  }));
+}
+

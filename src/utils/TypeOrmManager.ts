@@ -1,12 +1,11 @@
 import AppConfig from './Config';
-import { createConnection, EntityManager, getManager, getRepository, Repository } from 'typeorm';
-import EntityModelMetadata from '../entities/index';
+import { createConnection, EntityManager, getManager } from 'typeorm';
 
-class TypeOrmManager {
+export default class TypeOrmManager {
 
-  public static async initConnection () {
+  public static async initConnection (typeOrmConnectionConfig, entityList: any[]) {
     if (!this.connectionInit) {
-      const config = { ...AppConfig.typeOrm, entities: EntityModelMetadata };
+      const config = { ...typeOrmConnectionConfig, entities: entityList };
       await createConnection(config);
       this.connectionInit = true;
     }
@@ -15,12 +14,8 @@ class TypeOrmManager {
   private static connectionInit: boolean = false;
 
   public static get EntityManager (): EntityManager {
-    this.initConnection();
     return getManager();
   }
 
 }
 
-
-
-export default TypeOrmManager;
