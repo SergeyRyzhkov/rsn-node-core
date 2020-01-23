@@ -2,13 +2,13 @@
  * @module clientErrors
  */
 /** */
-import { Exception } from "../Exception";
+import { Exception } from '../Exception';
 
 export class NotAcceptable extends Exception {
 
-  name: string = "NOT_ACCEPTABLE";
+  public name: string = 'NOT_ACCEPTABLE';
 
   constructor (message: string) {
-    super(406, "You must accept content-type " + message);
+    super(406, 'You must accept content-type ' + message);
   }
 }

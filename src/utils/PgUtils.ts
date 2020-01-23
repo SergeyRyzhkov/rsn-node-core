@@ -175,4 +175,3 @@ class PgUtls {
 
 const pgUtils = new PgUtls();
 export default pgUtils;
-

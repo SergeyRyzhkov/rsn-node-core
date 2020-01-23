@@ -1,6 +1,6 @@
 import AppConfig from './utils/Config';
 
-const ClientAppConfig = {
+export const ClientAppConfig = {
 
   defaultRowsLimit: 6,
   showCookieNotice: false,

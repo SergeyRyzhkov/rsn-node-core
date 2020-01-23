@@ -72,13 +72,13 @@ export class DateUtils {
       const [hours, minutes, seconds] = value.split(':');
       const date = new Date();
       if (hours) {
-        date.setHours(parseInt(hours, 2));
+        date.setHours(parseInt(hours, 10));
       }
       if (minutes) {
-        date.setMinutes(parseInt(minutes, 2));
+        date.setMinutes(parseInt(minutes, 10));
       }
       if (seconds) {
-        date.setSeconds(parseInt(seconds, 2));
+        date.setSeconds(parseInt(seconds, 10));
       }
       return date;
     }

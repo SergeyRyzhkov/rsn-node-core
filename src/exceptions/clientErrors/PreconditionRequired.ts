@@ -2,11 +2,11 @@
  * @module clientErrors
  */
 /** */
-import { Exception } from "../Exception";
+import { Exception } from '../Exception';
 
 export class PreconditionRequired extends Exception {
 
-  name: string = "PRECONDITION_REQUIRED";
+  public name: string = 'PRECONDITION_REQUIRED';
 
   constructor (message: string) {
     super(428, message);

@@ -43,4 +43,19 @@ export default class ExpressApplicationHooks {
     return rsnApplication;
   }
 
+  public beforListen (rsnApplication: ExpressApplication): ExpressApplication {
+    return rsnApplication;
+  }
+
+  public afterListen (rsnApplication: ExpressApplication): ExpressApplication {
+    return rsnApplication;
+  }
+
+  public onListenError (rsnApplication: ExpressApplication, error): ExpressApplication {
+    return rsnApplication;
+  }
+
+  public onProcessStop (rsnApplication: ExpressApplication): ExpressApplication {
+    return rsnApplication;
+  }
 }

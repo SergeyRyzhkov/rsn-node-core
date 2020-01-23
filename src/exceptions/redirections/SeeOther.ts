@@ -2,11 +2,11 @@
  * @module redirections
  */
 /** */
-import {Exception} from "../Exception";
+import {Exception} from '../Exception';
 
 export class SeeOther extends Exception {
 
-    name: string = "SEE_OTHER";
+    public name: string = 'SEE_OTHER';
 
     constructor(message: string) {
         super(303, message);

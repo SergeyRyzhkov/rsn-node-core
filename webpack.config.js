@@ -7,19 +7,21 @@ const paths = {
   src: path.resolve(__dirname, 'src'),
   debug: path.resolve(__dirname, 'debug'),
   dist: path.resolve(__dirname, 'dist'),
-  types: path.resolve(__dirname, 'types')
+  lib: path.resolve(__dirname, 'lib'),
+  types: path.resolve(__dirname, 'lib')
 };
 const entryFileName = path.join(paths.src, "ExpressApplication.ts");
 const outProductionBundleFileName = 'index.js';
 const outDevBundleFileName = 'index.dev.js';
 
 
-class RsnDeleteFolderPlugin {
+class RsnCleanBeforBuildWebpackPlugin {
   apply(compiler) {
-    compiler.hooks.beforeRun.tap('RsnDeleteFolderPlugin', () => {
+    compiler.hooks.beforeRun.tap('RsnCleanBeforBuildWebpackPlugin', () => {
       this.remodeFolder(paths.types);
       this.remodeFolder(paths.dist);
       this.remodeFolder(paths.debug);
+      this.remodeFolder(paths.lib);
     });
   }
 
@@ -32,52 +34,9 @@ class RsnDeleteFolderPlugin {
   }
 };
 
-class RsnGenDtsIndexPlugin {
-  constructor() {
-    this.importSt = ''
-  }
-
-  apply(compiler) {
-    compiler.hooks.done.tap('RsnGenDtsIndexPlugin', () => {
-      this.processFolder(paths.types)
-      this.writeDtsIndexFile()
-    });
-  }
-
-  processFolder(folderPath) {
-    fs.readdirSync(folderPath).forEach((file, index) => {
-      const curPath = path.join(folderPath, file);
-      if (fs.lstatSync(curPath).isDirectory()) {
-        this.processFolder(curPath);
-      } else {
-        this.processFile(curPath)
-      }
-    });
-  }
-
-  processFile(filePath) {
-    const contents = fs.readFileSync(filePath, 'utf8');
-    const newContents = contents.replace(paths.types, '').replace(/@/g, '.');
-    fs.writeFileSync(filePath, newContents, 'utf8');
-
-    const fromImort = filePath.replace(paths.types, '').replace(/@/g, '.').replace('.d.ts', '').split(path.sep).join('/')
-    this.importSt = this.importSt + `export * from '.${fromImort}'` + '\n';
-  }
-
-  writeDtsIndexFile() {
-    let indexPath = path.resolve(paths.types, 'index.d.ts')
-    if (fs.existsSync(indexPath)) {
-      fs.unlinkSync(indexPath);
-    }
-    fs.writeFileSync(indexPath, this.importSt)
-  }
-};
-
-
 const nodeEnv = process.env.NODE_ENV || 'development';
 const {
-  getIfUtils,
-  removeEmpty
+  getIfUtils
 } = require('webpack-config-utils');
 
 const {
@@ -87,7 +46,6 @@ const {
 
 
 let config = {
-
   node: {
     setImmediate: false,
     process: 'mock',
@@ -106,61 +64,39 @@ let config = {
   },
 
   entry: entryFileName,
-  output: removeEmpty({
+  output: {
     filename: ifProduction(outProductionBundleFileName, outDevBundleFileName),
     path: path.resolve(__dirname, ifProduction(paths.dist, paths.debug)),
     pathinfo: false
-  }),
-
+  },
 
   mode: nodeEnv,
-  devtool: ifDevelopment('cheap-module-source-map', '#source-map'),
-  target: 'node', // in order to ignore built-in modules like path, fs, etc. 
-  externals: [NodeExternals()], // in order to ignore all modules in node_modules folder 
+  devtool: ifDevelopment('cheap-module-source-map', false),
+  target: 'node',
+  externals: [NodeExternals()],
 
   optimization: {
-    noEmitOnErrors: true,
-    removeAvailableModules: false,
-    removeEmptyChunks: false,
-    splitChunks: false
+    // noEmitOnErrors: true,
+    // removeAvailableModules: false,
+    // removeEmptyChunks: false,
+    // splitChunks: false
+    usedExports: true
   },
 
   module: {
-    rules: [
-
-      {
-        test: /\.ts$/,
-        enforce: 'pre',
-        loader: 'tslint-loader',
-        options: {
-          typeCheck: false,
-          emitErrors: false,
-          fix: true
-        },
-        exclude: /node_modules/
-      },
-
-      {
-        test: /\.tsx?$/,
-        loader: 'ts-loader',
-        exclude: /node_modules/,
-        options: {
-          configFile: "tsconfig.json",
-          happyPackMode: false,
-          experimentalWatchApi: true
-        }
-      }
-    ]
+    rules: [{
+      test: /\.tsx?$/,
+      loader: 'ts-loader',
+      exclude: /node_modules/
+    }]
   },
 
-  plugins: removeEmpty([
+  plugins: [
     new ForkTsCheckerWebpackPlugin({
       checkSyntacticErrors: true
     }),
-    new RsnDeleteFolderPlugin(),
-    new RsnGenDtsIndexPlugin()
-  ])
-
+    new RsnCleanBeforBuildWebpackPlugin()
+  ]
 };
 
 module.exports = config;

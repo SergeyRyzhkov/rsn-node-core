@@ -1,6 +1,6 @@
 
 import { Request, Response, NextFunction } from 'express';
-import SessionUser from '@/entities/users/SessionUser';
+import SessionUser from '../entities/users/SessionUser';
 import { ResponseWrapper } from './ResponseWrapper';
 import { Exception } from '@/exceptions/Exception';
 import AppConfig from '@/utils/Config';

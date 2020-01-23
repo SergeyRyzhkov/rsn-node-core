@@ -13,7 +13,7 @@ mail
 static
 log
 /.vscode
-package-lock*
+package-lock.json
 .npmrc
 assets
 test
@@ -25,5 +25,8 @@ examples
 tslint*
 tsconfig*
 webpack*
+dist*
+/NpmPublish.js
+/NpmPublish.d.ts
 
 

@@ -21,3 +21,4 @@ examples
 .github/
 .npmrc
 types*
+lib*

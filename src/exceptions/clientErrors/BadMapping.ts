@@ -2,14 +2,14 @@
  * @module clientErrors
  */
 /** */
-import { Exception } from "../Exception";
+import { Exception } from '../Exception';
 
 /**
  *
  */
 export class BadMapping extends Exception {
 
-  name: string = "BAD_MAPPING";
+  public name: string = 'BAD_MAPPING';
 
   /**
    *

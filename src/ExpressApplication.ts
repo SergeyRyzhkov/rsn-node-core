@@ -2,7 +2,6 @@ import * as express from 'express';
 import * as cors from 'cors';
 import * as bodyParser from 'body-parser';
 import * as passport from 'passport';
-import helmet from 'helmet';
 import { useExpressServer } from 'routing-controllers';
 
 import AppConfig from './utils/Config';
@@ -21,6 +20,8 @@ import ExpressApplicationHooks from './ExpressApplicationHooks';
 import { AppUser } from './entities/users/AppUser';
 import { AppUserSession } from './entities/users/AppUserSession';
 import { AppUserSocialNetProfile } from './entities/users/AppUserSocialNetProfile';
+import * as helmet from 'helmet';
+
 
 export default class ExpressApplication {
   private hooks: ExpressApplicationHooks;
@@ -30,18 +31,30 @@ export default class ExpressApplication {
 
   public async start (appHooks?: ExpressApplicationHooks) {
     this.hooks = appHooks || new ExpressApplicationHooks();
-
     try {
-      const expressApp = await this.initialize();
-
       const port = process.env.PORT || AppConfig.serverConfig.port;
-      expressApp.listen(port);
-      process.send('ready');
 
-      logger.info(`Server running on port ${port} in ${process.env.NODE_ENV}`);
+      appHooks.beforListen(this);
+      const expressApp = await this.initialize();
+      expressApp.listen(port, () => {
+        appHooks.afterListen(this);
+        if (process.send) {
+          process.send('ready');
+        }
+      });
+
+      process.on('SIGINT', () => {
+        this.hooks.onProcessStop(this);
+        logger.info('Server SIGINT');
+      });
+
+      return expressApp;
     } catch (exc) {
+      appHooks.onListenError(this, exc);
       logger.error(exc);
-      process.send('stop');
+      if (process.send) {
+        process.send('stop');
+      }
     }
   }
 
@@ -112,6 +125,3 @@ export default class ExpressApplication {
     return this.app;
   }
 }
-
-
-

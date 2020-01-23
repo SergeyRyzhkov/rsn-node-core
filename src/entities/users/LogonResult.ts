@@ -1,7 +1,8 @@
 import SessionUser from './SessionUser';
 import { Exception } from '@/exceptions/Exception';
+// import { Exception } from '../../exceptions/Exception';
 
-export const enum LogonStatus {
+export enum LogonStatus {
   OK,
   ShouldChangePassword,
   UserNotFoundButSocialNetworkAuthOK,

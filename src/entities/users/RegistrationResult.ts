@@ -1,7 +1,7 @@
 import SessionUser from './SessionUser';
 import { Exception } from '@/exceptions/Exception';
 
-export const enum RegistrationStatus {
+export enum RegistrationStatus {
   OK,
   AlreadyExists,
   InvalidEmail,
