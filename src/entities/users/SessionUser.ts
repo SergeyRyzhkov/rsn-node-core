@@ -1,5 +1,5 @@
 
-export default class SessionUser {
+export  class SessionUser {
 
   public static anonymousUser: SessionUser = new SessionUser();
 

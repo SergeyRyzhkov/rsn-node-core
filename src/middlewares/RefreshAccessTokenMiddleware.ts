@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import ServiceContainer from '@/services/ServiceContainer';
-import SessionUser from '@/entities/users/SessionUser';
-import TokenUtil from '@/utils/TokenUtil';
+import { SessionUser } from '@/entities/users/SessionUser';
+import { TokenUtil } from '@/utils/TokenUtil';
 import { BaseController } from '@/controllers/BaseController';
+import { ServiceRegistry } from '@/services/ServiceContainer';
+import { AuthService } from '@/services/user/AuthService';
 
 export const refreshAccessTokenMiddleware = () => {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -14,7 +15,7 @@ export const refreshAccessTokenMiddleware = () => {
     if (tokenHeader && tokenHeader.startsWith('Bearer ')) {
       const accessToken = tokenHeader.slice(7, tokenHeader.length);
       try {
-        const newAccessToken = await ServiceContainer.AuthService.refreshAccessToken(accessToken);
+        const newAccessToken = await ServiceRegistry.getService(AuthService).refreshAccessToken(accessToken);
         req.user = TokenUtil.getSessionUserId(newAccessToken);
         BaseController.setJWTHeader(res, newAccessToken);
         next();

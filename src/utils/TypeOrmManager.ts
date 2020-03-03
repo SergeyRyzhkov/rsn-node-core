@@ -1,7 +1,6 @@
-import AppConfig from './Config';
 import { createConnection, EntityManager, getManager } from 'typeorm';
 
-export default class TypeOrmManager {
+export class TypeOrmManager {
 
   public static async initConnection (typeOrmConnectionConfig, entityList: any[]) {
     if (!this.connectionInit) {

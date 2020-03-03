@@ -1,5 +1,5 @@
 import { Exception } from '@/exceptions/Exception';
-import ClientNotifyMessage from './ClientNotifyMessage';
+import { ClientNotifyMessage } from './ClientNotifyMessage';
 
 export class ResponseWrapper {
 

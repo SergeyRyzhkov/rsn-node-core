@@ -1,13 +1,13 @@
 import { BaseController } from './BaseController';
 import { Response } from 'express';
-import ClientAppConfig from '@/ClientAppConfig';
-import AppConfig from '@/utils/Config';
+import { ClientAppConfig } from '@/ClientAppConfig';
+import { AppConfig } from '@/utils/Config';
 import { JsonController, Get, Res, getMetadataArgsStorage, UseBefore } from 'routing-controllers';
 import { routingControllersToSpec } from 'routing-controllers-openapi'
 import { authorized } from '@/middlewares/AuthorizeMiddleware';
 
 @JsonController('/app')
-export default class AppController extends BaseController {
+export class AppController extends BaseController {
 
   @Get('/client/config')
   public async getClientAppConfig (@Res() response: Response) {

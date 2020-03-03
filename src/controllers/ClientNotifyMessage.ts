@@ -1,4 +1,4 @@
-export default class ClientNotifyMessage {
+export  class ClientNotifyMessage {
 
   public static createAlert (title: string, text: string) {
     return new ClientNotifyMessage(true, title, text);

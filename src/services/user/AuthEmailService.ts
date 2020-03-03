@@ -1,8 +1,8 @@
-import Guid from '@/utils/Guid';
-import AppConfig from '@/utils/Config';
-import MailSender from '@/utils/MailSender';
+import { AppConfig } from '@/utils/Config';
+import { MailSender } from '@/utils/MailSender';
+import { BaseService } from '../BaseService';
 
-export default class AuthEmailService {
+export class AuthEmailService extends BaseService {
 
   // Отправляем письмо с подтверждением регистрации
   public sendVerifyRegistrationEmail (email: string, verifyToken: string) {

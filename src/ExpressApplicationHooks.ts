@@ -1,7 +1,6 @@
-import ExpressApplication from './ExpressApplication';
-import TypeOrmManager from './utils/TypeOrmManager';
+import { ExpressApplication } from './ExpressApplication';
 
-export default class ExpressApplicationHooks {
+export class ExpressApplicationHooks {
 
   public beforInitialize (rsnApplication: ExpressApplication): ExpressApplication {
     return rsnApplication;

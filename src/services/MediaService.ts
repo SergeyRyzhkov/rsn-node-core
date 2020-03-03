@@ -2,9 +2,9 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as cuid from 'cuid';
 import * as mime from 'mime-types';
-import BaseService from './BaseService';
+import { BaseService } from './BaseService';
 
-export default class MediaService extends BaseService {
+export class MediaService extends BaseService {
 
 
   public async saveSitePageImage (sitePageId: number, file: Express.Multer.File) {

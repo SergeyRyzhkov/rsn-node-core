@@ -1,10 +1,10 @@
 
 import * as jwt from 'jsonwebtoken';
-import AppConfig from '@/utils/Config';
-import SessionUser from '@/entities/users/SessionUser';
-import ClassTransform from './ClassTransform';
+import { AppConfig } from '@/utils/Config';
+import { SessionUser } from '@/entities/users/SessionUser';
+import { ClassTransform } from './ClassTransform';
 
-export default class TokenUtil {
+export class TokenUtil {
 
   public static generateAccessToken (sessionUser: SessionUser, sessionId: string): string {
     const payload = { ...sessionUser };

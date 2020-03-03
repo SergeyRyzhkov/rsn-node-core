@@ -1,8 +1,8 @@
-import PgUtls from '@/utils/PgUtils';
-import SortFilterPagination from '@/entities/SortFilterPagination';
-import ClassTransform from '@/utils/ClassTransform';
+import { PgUtls } from '@/utils/PgUtils';
+import { SortFilterPagination } from '@/entities/SortFilterPagination';
+import { ClassTransform } from '@/utils/ClassTransform';
 
-export default class BaseService {
+export class BaseService {
 
   public async getDbViewResult (viewName: string, sortFilterPagin?: SortFilterPagination, whereStmt?: string, whereParams?: any[]) {
     return PgUtls.getAnyFromDatabase(viewName, sortFilterPagin, whereStmt, whereParams);

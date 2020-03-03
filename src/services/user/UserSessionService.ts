@@ -1,11 +1,11 @@
-import BaseService from '../BaseService';
+import { BaseService } from '../BaseService';
 import { AppUserSession } from '@/entities/users/AppUserSession';
-import TypeOrmManager from '@/utils/TypeOrmManager';
-import PgUtls from '@/utils/PgUtils';
-import Guid from '@/utils/Guid';
-import AppConfig from '@/utils/Config';
+import { TypeOrmManager } from '@/utils/TypeOrmManager';
+import { PgUtls } from '@/utils/PgUtils';
+import { Guid } from '@/utils/Guid';
+import { AppConfig } from '@/utils/Config';
 
-export default class UserSessionService extends BaseService {
+export class UserSessionService extends BaseService {
 
   public async getByToken (token: string) {
     const dbResult = await PgUtls.getOneFromDatabse('v_api_app_user_session', 'user_session_token=$1', [token]);

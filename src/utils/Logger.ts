@@ -1,5 +1,6 @@
-import * as winston from 'winston';
+import { createLogger, format, transports } from 'winston';
 import * as fs from 'fs';
+import * as path from 'path';
 
 const logDir = 'log';
 
@@ -7,21 +8,34 @@ if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir);
 }
 
+const errorFile = path.resolve(logDir, 'serverlog.log');
+const exceptionsFile = path.resolve(logDir, 'exceptions.log');
 
-export const logger = winston.createLogger({
+const { combine, timestamp, label, printf } = format;
+
+const myFormat = printf(({ level, message, label, timestamp }) => {
+  return `${timestamp} [${label}] ${level}: ${message}`;
+});
+
+export const logger = createLogger({
   exitOnError: false,
-  level: 'info',
-  format: winston.format.json(),
-  defaultMeta: { service: 'user-service' },
+  format: combine(
+    label({ label: 'right meow!' }),
+    timestamp(),
+    myFormat
+  ),
   transports: [
-    new winston.transports.File({ filename: `${logDir}/error.log`, level: 'error' }),
-    new winston.transports.File({ filename: `${logDir}/combined.log` })
+    new transports.File(
+      {
+        level: 'info',
+        filename: errorFile,
+        handleExceptions: true
+      }
+    )
+  ],
+  exceptionHandlers: [
+    new transports.File({ filename: exceptionsFile })
   ]
 });
 
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.simple()
-  }));
-}
 

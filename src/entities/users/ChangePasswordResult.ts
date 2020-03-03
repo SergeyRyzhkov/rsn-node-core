@@ -1,4 +1,4 @@
-import SessionUser from './SessionUser';
+import { SessionUser } from './SessionUser';
 import { Exception } from '@/exceptions/Exception';
 
 export enum ChangePasswordStatus {

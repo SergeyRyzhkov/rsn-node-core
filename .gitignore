@@ -22,3 +22,4 @@ examples
 .npmrc
 types*
 lib*
+npm

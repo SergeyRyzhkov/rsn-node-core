@@ -1,7 +1,7 @@
-import AppConfig from './Config';
+import { AppConfig } from './Config';
 import { IMain, IDatabase } from 'pg-promise';
 import * as pgPromise from 'pg-promise';
-import SortFilterPagination from '../entities/SortFilterPagination';
+import { SortFilterPagination } from '../entities/SortFilterPagination';
 import * as camelcaseKeys from 'camelcase-keys';
 
 
@@ -69,7 +69,7 @@ enum TypeId {
   REGROLE = 4096
 }
 
-class PgUtls {
+class PostgreWWrapper {
   private postgrePromise: IDatabase<{}>
 
   constructor () {
@@ -173,5 +173,5 @@ class PgUtls {
 
 }
 
-const pgUtils = new PgUtls();
-export default pgUtils;
+export const PgUtls = new PostgreWWrapper();
+

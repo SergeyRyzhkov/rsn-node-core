@@ -3,15 +3,16 @@ import * as passport from 'passport';
 import { Request, Response } from 'express';
 import { LogonResult, LogonStatus } from '@/entities/users/LogonResult';
 import { Param, Post, Req, Res, JsonController, Get, BodyParam, OnUndefined } from 'routing-controllers';
-import ServiceContainer from '@/services/ServiceContainer';
-import TokenUtil from '@/utils/TokenUtil';
+import { TokenUtil } from '@/utils/TokenUtil';
 import { Unauthorized } from '@/exceptions/authErrors/Unauthorized';
-import Guid from '@/utils/Guid';
-import PassportProviders from '@/services/user/PassportProviders';
+import { Guid } from '@/utils/Guid';
+import { PassportProviders } from '@/services/user/PassportProviders';
 import { BadRequest } from '@/exceptions/clientErrors/BadRequest';
+import { ServiceRegistry } from '@/services/ServiceContainer';
+import { UserSessionService } from '@/services/user/UserSessionService';
 
 @JsonController('/auth')
-export default class AuthController extends BaseController {
+export class AuthController extends BaseController {
 
   @Post('/login')
   public async authenticateLocal (
@@ -72,7 +73,7 @@ export default class AuthController extends BaseController {
           }
 
           if (logonResult.logonStatus === LogonStatus.OK) {
-            const newSession = await ServiceContainer.UserSessionService.createSession(logonResult.sessionUser.appUserId);
+            const newSession = await ServiceRegistry.getService(UserSessionService).createSession(logonResult.sessionUser.appUserId);
             newAccessToken = TokenUtil.generateAccessToken(logonResult.sessionUser, newSession.userSessionToken);
           }
 

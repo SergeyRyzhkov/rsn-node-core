@@ -1,7 +1,7 @@
 
 import * as transformer from 'class-transformer';
 
-export default class ClassTransform {
+export  class ClassTransform {
 
   public static jsonStringToClass = (jsonString, classType: any) => {
     return transformer.deserialize(classType, jsonString);

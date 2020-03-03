@@ -1,15 +1,15 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
-import * as fsExtra from 'fs-extra';
 
 class NpmPublish {
 
   private paths = {
     src: path.resolve(__dirname, 'src'),
     debug: path.resolve(__dirname, 'debug'),
-    dist: path.resolve(__dirname, 'dist'),
-    lib: path.resolve(__dirname, 'lib')
+    npm: path.resolve(__dirname, 'npm'),
+    npm_lib: path.resolve(__dirname, 'npm', 'lib'),
+    npm_typings: path.resolve(__dirname, 'npm', 'types')
   };
 
   private importSt: string = '';
@@ -20,13 +20,11 @@ class NpmPublish {
     this.compile();
     this.convertPathAliasToRelative();
     this.publishPackage();
-    this.deleteSrcIndexTs();
+    this.afterPublish();
   }
 
   private cleanUp () {
-    this.deleteFolder(this.paths.dist);
-    this.deleteFolder(this.paths.debug);
-    this.deleteFolder(this.paths.lib);
+    this.deleteFolder(this.paths.npm);
     this.deleteSrcIndexTs();
 
     return this;
@@ -47,19 +45,14 @@ class NpmPublish {
 
   private compile () {
     try {
-      // execSync('tsc --emitDeclarationOnly');
       execSync('tsc');
-      // tslint:disable-next-line:no-empty
     } catch (exc) {
     }
   }
 
-  // private copyTs () {
-  //   fsExtra.copySync(this.paths.src, this.paths.lib);
-  // }
-
   private convertPathAliasToRelative () {
-    this.processFolder(this.paths.lib, this.convertPathAliasToRelativeTypeIndex.bind(this), this.paths.lib);
+    this.processFolder(this.paths.npm_lib, this.convertPathAliasToRelativeIndex.bind(this), this.paths.npm_lib);
+    this.processFolder(this.paths.npm_typings, this.convertPathAliasToRelativeIndex.bind(this), this.paths.npm_typings);
   }
 
   private processFolder (folderPath, visitor, startFolderPath) {
@@ -80,7 +73,7 @@ class NpmPublish {
     }
   }
 
-  private convertPathAliasToRelativeTypeIndex (folderPath, filePath) {
+  private convertPathAliasToRelativeIndex (folderPath, filePath) {
     const contents = fs.readFileSync(filePath, 'utf8');
     const relativePath = filePath.replace(`${folderPath}${path.sep}`, '');
     const repl = relativePath.split(path.sep).length > 1 ? '../'.repeat(relativePath.split(path.sep).length - 1) : './';
@@ -94,32 +87,35 @@ class NpmPublish {
     const sourceObj = JSON.parse(source);
     sourceObj.scripts = {};
     sourceObj.devDependencies = {};
-    sourceObj.main = 'index.js';
+    sourceObj.main = 'lib/index.js';
+    sourceObj.files = ['lib', 'types'];
+    sourceObj.types = 'types/index.d.ts';
 
     const versions: string[] = (sourceObj.version as string).split('.');
     versions.splice(versions.length - 1, 1, (parseInt(versions[versions.length - 1], 10) + 1).toString());
     sourceObj.version = versions.join('.');
 
-    fs.writeFileSync(path.resolve(this.paths.lib, 'package.json'), JSON.stringify(sourceObj), 'utf8');
+    fs.writeFileSync(path.resolve(this.paths.npm, 'package.json'), JSON.stringify(sourceObj), 'utf8');
 
-    if (fs.existsSync(path.resolve(__dirname, '.npmignore'))) {
-      fs.copyFileSync(path.resolve(__dirname, '.npmignore'), path.resolve(this.paths.lib, '.npmignore'));
-    }
+    this.copyFilesToNpm('.npmignore', '.npmrc', 'README.md', 'LICENSE')
 
-    if (fs.existsSync(path.resolve(__dirname, '.npmrc'))) {
-      fs.copyFileSync(path.resolve(__dirname, '.npmrc'), path.resolve(this.paths.lib, '.npmrc'));
-    }
-
-    if (fs.existsSync(path.resolve(__dirname, 'README.md'))) {
-      fs.copyFileSync(path.resolve(__dirname, 'README.md'), path.resolve(this.paths.lib, 'README.md'));
-    }
-
-    if (fs.existsSync(path.resolve(__dirname, 'LICENSE'))) {
-      fs.copyFileSync(path.resolve(__dirname, 'LICENSE'), path.resolve(this.paths.lib, 'LICENSE'));
-    }
-
-    process.chdir(this.paths.lib);
+    process.chdir(this.paths.npm);
     execSync('npm publish');
+  }
+
+  private afterPublish () {
+    this.deleteFolder(this.paths.npm);
+    this.deleteSrcIndexTs();
+  }
+
+  private copyFilesToNpm (...fileNames: string[]) {
+    fileNames.forEach(iterFileName => {
+      const filePath = path.resolve(__dirname, iterFileName);
+      const destPath = path.resolve(this.paths.npm, iterFileName);
+      if (fs.existsSync(filePath)) {
+        fs.copyFileSync(filePath, destPath);
+      }
+    })
   }
 
   private deleteFolder (folderPath: string) {

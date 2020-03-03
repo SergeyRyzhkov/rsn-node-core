@@ -1,11 +1,11 @@
-import BaseService from '../BaseService';
+import { BaseService } from '../BaseService';
 import { AppUser } from '../../entities/users/AppUser';
-import TypeOrmManager from '@/utils/TypeOrmManager';
-import PgUtls from '@/utils/PgUtils';
+import { TypeOrmManager } from '@/utils/TypeOrmManager';
+import { PgUtls } from '@/utils/PgUtils';
 import { AppUserSocialNetProfile } from '@/entities/users/AppUserSocialNetProfile';
-import SessionUser from '../../entities/users/SessionUser';
+import { SessionUser } from '../../entities/users/SessionUser';
 
-export default class UserService extends BaseService {
+export class UserService extends BaseService {
 
   public async getById (userId: number) {
     const dbResult = await PgUtls.getOneFromDatabse('v_api_app_user', 'app_user_id=$1', [userId]);
