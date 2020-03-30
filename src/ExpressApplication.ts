@@ -78,6 +78,9 @@ export class ExpressApplication {
     this.appControllers = [...this.appControllers, ...controllers];
 
     this.addOrmEntityModelMetadata([AppUser])
+
+    а еще две смущности ?
+      AppUserSession AppUserSocialNetProfile
   }
 
   public addOrmEntityModelMetadata (antityList: any[]) {
