@@ -4,7 +4,7 @@ import { TypeOrmManager } from '@/TypeOrmManager';
 import { postgresWrapper } from '@/PostgresWrapper';
 import { Guid } from '@/utils/Guid';
 import { AppConfig } from '@/utils/Config';
-import * as transformer from 'class-transformer';
+import transformer from 'class-transformer';
 
 export class UserSessionService extends BaseService {
 
