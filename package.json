@@ -1,6 +1,6 @@
 {
   "name": "rsn-express-core",
-  "version": "1.0.90",
+  "version": "1.1.0",
   "description": "Sergey Ryzhkov core Express (node) platform",
   "main": "index.js",
   "repository": "git@github.com:SergeyRyzhkov/rsn-node-core",
@@ -16,7 +16,6 @@
     "@types/compression": "latest",
     "@types/express": "latest",
     "@types/express-session": "latest",
-    "@types/fs-extra": "latest",
     "@types/helmet": "latest",
     "@types/jsonwebtoken": "^8.3.7",
     "@types/mime-types": "latest",
@@ -27,7 +26,7 @@
     "@types/passport-google-oauth2": "latest",
     "@types/passport-jwt": "latest",
     "@types/passport-local": "latest",
-    "@types/node-fetch": "^2.5.4",
+    "@types/node-fetch": "latest",
     "cross-env": "latest",
     "eslint": "latest",
     "fork-ts-checker-webpack-plugin": "^4.0.2",
@@ -42,8 +41,7 @@
     "webpack-node-externals": "latest"
   },
   "dependencies": {
-    "@sindresorhus/slugify": "^0.10.0",
-    "class-validator": "^0.10.1",
+    "class-validator": "^0.12.2",
     "bcrypt": "3.0.6",
     "body-parser": "latest",
     "camelcase-keys": "latest",
@@ -55,8 +53,8 @@
     "express": "latest",
     "express-session": "latest",
     "express-validator": "latest",
-    "fs-extra": "latest",
     "helmet": "latest",
+    "nocache": "latest",
     "jsonwebtoken": "latest",
     "mime-types": "latest",
     "multer": "latest",
@@ -75,6 +73,6 @@
     "winston": "latest",
     "http-proxy-agent": "latest",
     "https-proxy-agent": "latest",
-    "node-fetch": "^2.6.0"
+    "node-fetch": "latest"
   }
 }

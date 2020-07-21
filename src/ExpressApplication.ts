@@ -1,11 +1,12 @@
-import * as express from 'express';
-import * as cors from 'cors';
-import * as bodyParser from 'body-parser';
-import * as passport from 'passport';
+import express from 'express';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import passport from 'passport';
 import { useExpressServer } from 'routing-controllers';
+import noCache from 'nocache';
 
 import { AppConfig } from './utils/Config';
-import { TypeOrmManager } from './utils/TypeOrmManager';
+import { TypeOrmManager } from './TypeOrmManager';
 import { headerMiddleware } from './middlewares/HeaderMiddleware';
 import { errorMiddleware } from './middlewares/ErrorMiddleware';
 import { refreshAccessToken } from './middlewares/AuthorizeMiddleware';
@@ -13,26 +14,26 @@ import { ClientAppConfig } from '@/ClientAppConfig';
 import { logger } from './utils/Logger';
 import { BaseController } from './controllers/BaseController';
 import { AppController } from './controllers/AppController';
-import { AuthController } from './controllers/user/AuthController';
-import { UserController } from './controllers/user/UserController';
+import { AuthController } from './controllers/auth/AuthController';
+import { UserController } from './controllers/auth/UserController';
 import { ExpressApplicationHooks } from './ExpressApplicationHooks';
 import { AppUser } from './entities/users/AppUser';
 import { AppUserSession } from './entities/users/AppUserSession';
 import { AppUserSocialNetProfile } from './entities/users/AppUserSocialNetProfile';
-import * as helmet from 'helmet';
-import { ServiceRegistry } from './services/ServiceContainer';
-import { UserService } from './services/user/UserService';
-import { UserSessionService } from './services/user/UserSessionService';
-import { AuthService } from './services/user/AuthService';
-import { PassportProviders } from './services/user/PassportProviders';
-import { AuthEmailService } from './services/user/AuthEmailService';
+import helmet from 'helmet';
+import { serviceRegistry } from './ServiceRegistry';
+import { UserService } from './services/auth/UserService';
+import { UserSessionService } from './services/auth/UserSessionService';
+import { AuthService } from './services/auth/AuthService';
+import { PassportProviders } from './services/auth/PassportProviders';
+import { AuthEmailService } from './services/auth/AuthEmailService';
 import { MediaService } from './services/MediaService';
 
 
 export class ExpressApplication {
   private hooks: ExpressApplicationHooks = new ExpressApplicationHooks();
   private app = express();
-  private appControllers: Array<typeof BaseController> = [AppController, AuthController, UserController];
+  private appControllers: typeof BaseController[] = [AppController, AuthController, UserController];
   private ormEntityModelMetadata: any[] = [AppUser, AppUserSession, AppUserSocialNetProfile];
 
   public async start (appHooks?: ExpressApplicationHooks) {
@@ -74,44 +75,34 @@ export class ExpressApplication {
     return AppConfig;
   }
 
-  public addAppControllers (controllers: Array<typeof BaseController>) {
+  public addAppControllers (controllers: typeof BaseController[]) {
     this.appControllers = [...this.appControllers, ...controllers];
-
-    this.addOrmEntityModelMetadata([AppUser])
-
-    а еще две смущности ?
-      AppUserSession AppUserSocialNetProfile
   }
 
-  public addOrmEntityModelMetadata (antityList: any[]) {
+  public addTypeOrmEntityMetadata (antityList: any[]) {
     this.ormEntityModelMetadata = [...this.ormEntityModelMetadata, ...antityList];
-  }
-
-  public getTypeOrmManager () {
-    return TypeOrmManager;
   }
 
   public async initialize () {
 
     this.hooks.beforInitialize(this);
 
-    ServiceRegistry.register(UserService).
+    serviceRegistry.register(UserService).
       register(UserSessionService).
       register(AuthService).
       register(PassportProviders).
       register(AuthEmailService).
       register(MediaService);
 
-
     this.hooks.beforTypeOrmInitialize(this);
     if (!!AppConfig.typeOrm) {
-      await TypeOrmManager.initConnection(AppConfig.typeOrm, this.ormEntityModelMetadata);
+      await TypeOrmManager.initConnection(this.ormEntityModelMetadata);
     }
     this.hooks.afterTypeOrmInitialize(this)
 
     this.app.set('trust proxy', 1);
     this.app.use(helmet());
-    this.app.use(helmet.noCache());
+    this.app.use(noCache());
 
     if (AppConfig.serverConfig.useCors) {
       this.app.use(cors());
@@ -124,7 +115,7 @@ export class ExpressApplication {
     if (!!AppConfig.authConfig) {
       this.hooks.beforPassportInitialize(this);
       // FIXME: Через конфиг или отдельные методы
-      ServiceRegistry.getService(PassportProviders).initialize(ClientAppConfig);
+      serviceRegistry.getService(PassportProviders).initialize(ClientAppConfig);
       this.app.use(passport.initialize());
       this.hooks.afterPassportInitialize(this);
       // FIXME: работу с токенами через конфиг (надо или нет)  или отдельные методы
@@ -134,11 +125,13 @@ export class ExpressApplication {
 
     this.app.use(headerMiddleware());
 
-    this.hooks.beforRoutingControllersInitialize(this)
+    this.hooks.beforRoutingControllersInitialize(this);
+
     useExpressServer(this.app, {
       routePrefix: AppConfig.serverConfig.restApiEndPoint,
       controllers: this.appControllers
     });
+
     this.hooks.afterRoutingControllersInitialize(this);
 
     this.app.use(errorMiddleware());

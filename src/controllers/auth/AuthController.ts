@@ -6,10 +6,10 @@ import { Param, Post, Req, Res, JsonController, Get, BodyParam, OnUndefined } fr
 import { TokenUtil } from '@/utils/TokenUtil';
 import { Unauthorized } from '@/exceptions/authErrors/Unauthorized';
 import { Guid } from '@/utils/Guid';
-import { PassportProviders } from '@/services/user/PassportProviders';
+import { PassportProviders } from '@/services/auth/PassportProviders';
 import { BadRequest } from '@/exceptions/clientErrors/BadRequest';
-import { ServiceRegistry } from '@/services/ServiceContainer';
-import { UserSessionService } from '@/services/user/UserSessionService';
+import { serviceRegistry } from '@/ServiceRegistry';
+import { UserSessionService } from '@/services/auth/UserSessionService';
 
 @JsonController('/auth')
 export class AuthController extends BaseController {
@@ -34,7 +34,7 @@ export class AuthController extends BaseController {
       const logonResult = new LogonResult();
       BaseController.addJWTCookie(response, logonResult, null);
       logonResult.makeErrorResult(new BadRequest('Invalid passport provider'));
-      return BaseController.setLocationToClient(response, `/auth/callback/login`)
+      return BaseController.createRedirectResponse(response, `/auth/callback/login`)
     }
 
     let scope = {};
@@ -73,7 +73,7 @@ export class AuthController extends BaseController {
           }
 
           if (logonResult.logonStatus === LogonStatus.OK) {
-            const newSession = await ServiceRegistry.getService(UserSessionService).createSession(logonResult.sessionUser.appUserId);
+            const newSession = await serviceRegistry.getService(UserSessionService).createSession(logonResult.sessionUser.appUserId);
             newAccessToken = TokenUtil.generateAccessToken(logonResult.sessionUser, newSession.userSessionToken);
           }
 
@@ -86,7 +86,7 @@ export class AuthController extends BaseController {
             resolve(BaseController.createSuccessResponse(logonResult, response, 200, '/auth/callback/login'));
           } else {
             BaseController.addJWTCookie(response, logonResult, newAccessToken);
-            resolve(BaseController.setLocationToClient(response, `/auth/callback/login`));
+            resolve(BaseController.createRedirectResponse(response, `/auth/callback/login`));
           }
 
         })(request, response, null);

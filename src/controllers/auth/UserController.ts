@@ -10,10 +10,10 @@ import { authorized } from '@/middlewares/AuthorizeMiddleware';
 import { logger } from '@/utils/Logger';
 import { ChangePasswordStatus } from '@/entities/users/ChangePasswordResult';
 import { AppUser } from '@/entities/users/AppUser';
-import { ServiceRegistry } from '@/services/ServiceContainer';
-import { AuthService } from '@/services/user/AuthService';
-import { UserSessionService } from '@/services/user/UserSessionService';
-import { UserService } from '@/services/user/UserService';
+import { serviceRegistry } from '@/ServiceRegistry';
+import { AuthService } from '@/services/auth/AuthService';
+import { UserSessionService } from '@/services/auth/UserSessionService';
+import { UserService } from '@/services/auth/UserService';
 
 @JsonController('/user')
 export class UserController extends BaseController {
@@ -29,7 +29,7 @@ export class UserController extends BaseController {
 
       BaseController.setCurrentUserAnonymous(request, response);
 
-      const registrationResult = await ServiceRegistry.getService(AuthService).registerNewUser(useremail, password, request.body.unlinkedSocialUser);
+      const registrationResult = await serviceRegistry.getService(AuthService).registerNewUser(useremail, password, request.body.unlinkedSocialUser);
       if (registrationResult.registrationStatus === RegistrationStatus.OK) {
         const newAccessToken = await this.autoLogonUser(registrationResult.sessionUser);
         BaseController.setJWTHeader(response, newAccessToken);
@@ -52,7 +52,7 @@ export class UserController extends BaseController {
     @Req() request: Request,
     @Res() response: Response) {
 
-    const verifier = (token: string) => ServiceRegistry.getService(AuthService).confirmRegistration(token);
+    const verifier = (token: string) => serviceRegistry.getService(AuthService).confirmRegistration(token);
     return this.verifyUserByToken(request, response, token, verifier, LogonStatus.OK, `/auth/callback/login`)
   }
 
@@ -62,7 +62,7 @@ export class UserController extends BaseController {
     @Req() request: Request,
     @Res() response: Response) {
 
-    const verifier = (token: string) => ServiceRegistry.getService(AuthService).confirmResetPassword(token);
+    const verifier = (token: string) => serviceRegistry.getService(AuthService).confirmResetPassword(token);
     return this.verifyUserByToken(request, response, token, verifier, LogonStatus.ShouldChangePassword, `/auth/callback/login`, true)
   }
 
@@ -74,7 +74,7 @@ export class UserController extends BaseController {
     BaseController.setCurrentUserAnonymous(request, response);
     const sessionToken = BaseController.getUserSessionId(request);
     if (sessionToken) {
-      await ServiceRegistry.getService(AuthService).logout(sessionToken)
+      await serviceRegistry.getService(AuthService).logout(sessionToken)
     }
     return BaseController.createSuccessResponse({}, response, 200, '/auth/callback/logoff');
   }
@@ -87,7 +87,7 @@ export class UserController extends BaseController {
 
     try {
       BaseController.setCurrentUserAnonymous(request, response);
-      const appUser = await ServiceRegistry.getService(AuthService).resetPassword(useremail);
+      const appUser = await serviceRegistry.getService(AuthService).resetPassword(useremail);
       const alertText = !appUser
         ? 'Ошибка!'
         : `На адрес ${useremail} отправлено письмо с инструкциями для восстановления пароля`;
@@ -107,7 +107,7 @@ export class UserController extends BaseController {
     @Res() response: Response) {
 
     try {
-      const сhangePasswordResult = await ServiceRegistry.getService(AuthService).changePassword(BaseController.getSessionUser(request), password, newPassword);
+      const сhangePasswordResult = await serviceRegistry.getService(AuthService).changePassword(BaseController.getSessionUser(request), password, newPassword);
       if (сhangePasswordResult.status === ChangePasswordStatus.OK) {
         сhangePasswordResult.sessionUser.reset = false;
         const newAccessToken = await this.autoLogonUser(сhangePasswordResult.sessionUser);
@@ -130,7 +130,7 @@ export class UserController extends BaseController {
     @Res() response: Response) {
 
     try {
-      ServiceRegistry.getService(AuthService).sendConfirmRegistrationMessage(useremail);
+      serviceRegistry.getService(AuthService).sendConfirmRegistrationMessage(useremail);
       const alertText = ` На адрес ${useremail} отправлено письмо для проверки электронной почты. Перейдите по ссылке из письма, иначе через сутки аккаунт будет удален`;
       return BaseController.createSuccessResponseWithMessage({}, response, 200, ClientNotifyMessage.createAlert('Регистрация', alertText));
     } catch (err) {
@@ -140,7 +140,7 @@ export class UserController extends BaseController {
 
   // Логиним пользоваиеля после регистрации или подтверждения еиайл через почту (по ссылке) или смене пароля
   private async autoLogonUser (sessionUser: SessionUser) {
-    const newSession = await ServiceRegistry.getService(UserSessionService).createSession(sessionUser.appUserId);
+    const newSession = await serviceRegistry.getService(UserSessionService).createSession(sessionUser.appUserId);
     const newAccessToken = TokenUtil.generateAccessToken(sessionUser, newSession.userSessionToken);
     return newAccessToken;
   }
@@ -159,7 +159,7 @@ export class UserController extends BaseController {
       if (token) {
         const verifiedUser = await verifier(token);
         if (verifiedUser) {
-          const sessionUser = ServiceRegistry.getService(UserService).convertAppUserToSessionUser(verifiedUser);
+          const sessionUser = serviceRegistry.getService(UserService).convertAppUserToSessionUser(verifiedUser);
           sessionUser.reset = isResetPwdState;
           newAccessToken = await this.autoLogonUser(sessionUser);
           logonResult.logonStatus = onValidLogonStatus;
@@ -176,7 +176,7 @@ export class UserController extends BaseController {
     }
 
     BaseController.addJWTCookie(response, logonResult, newAccessToken);
-    return BaseController.setLocationToClient(response, clientRedirectLocation);
+    return BaseController.createRedirectResponse(response, clientRedirectLocation);
   }
 
 

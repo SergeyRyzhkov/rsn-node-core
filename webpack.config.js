@@ -17,13 +17,13 @@ const outDevBundleFileName = 'index.dev.js';
 class RsnCleanBeforBuildWebpackPlugin {
   apply(compiler) {
     compiler.hooks.beforeRun.tap('RsnCleanBeforBuildWebpackPlugin', () => {
-      this.remodeFolder(paths.dist);
-      this.remodeFolder(paths.debug);
-      this.remodeFolder(paths.npm);
+      this.removeFolder(paths.dist);
+      this.removeFolder(paths.debug);
+      this.removeFolder(paths.npm);
     });
   }
 
-  remodeFolder(folderPath) {
+  removeFolder(folderPath) {
     if (fs.existsSync(folderPath)) {
       fs.rmdirSync(folderPath, {
         recursive: true

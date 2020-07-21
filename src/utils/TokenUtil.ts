@@ -2,7 +2,7 @@
 import * as jwt from 'jsonwebtoken';
 import { AppConfig } from '@/utils/Config';
 import { SessionUser } from '@/entities/users/SessionUser';
-import { ClassTransform } from './ClassTransform';
+import * as transformer from 'class-transformer';
 
 export class TokenUtil {
 
@@ -45,7 +45,7 @@ export class TokenUtil {
   public static getSessionUser (token: string): SessionUser {
     const payload = jwt.decode(token, { complete: false, json: true });
     this.deleteClaimProperties(payload);
-    return ClassTransform.plainToClassInstanceOne<SessionUser>(payload, SessionUser)
+    return transformer.plainToClass(SessionUser, payload)
   }
 
   // FIXME: Wthat is the options // mutatePayload ?

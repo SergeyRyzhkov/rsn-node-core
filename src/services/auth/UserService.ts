@@ -1,15 +1,16 @@
 import { BaseService } from '../BaseService';
 import { AppUser } from '../../entities/users/AppUser';
-import { TypeOrmManager } from '@/utils/TypeOrmManager';
-import { PgUtls } from '@/utils/PgUtils';
+import { TypeOrmManager } from '@/TypeOrmManager';
+import { postgresWrapper } from '@/PostgresWrapper';
 import { AppUserSocialNetProfile } from '@/entities/users/AppUserSocialNetProfile';
 import { SessionUser } from '../../entities/users/SessionUser';
+import * as transformer from 'class-transformer';
 
 export class UserService extends BaseService {
 
   public async getById (userId: number) {
-    const dbResult = await PgUtls.getOneFromDatabse('v_api_app_user', 'app_user_id=$1', [userId]);
-    return this.getOneEntityInstanceFromJson(dbResult, AppUser);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('v_api_app_user', 'app_user_id=$1', [userId]);
+    return transformer.plainToClass(AppUser, dbResult)
   }
 
   public async getByEmail (email: string) {
@@ -17,27 +18,27 @@ export class UserService extends BaseService {
       return null;
     }
 
-    const dbResult = await PgUtls.getOneFromDatabse('v_api_app_user', 'LOWER(app_user_email)=$1', [email.trim().toLowerCase()]);
-    return this.getOneEntityInstanceFromJson(dbResult, AppUser);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('v_api_app_user', 'LOWER(app_user_email)=$1', [email.trim().toLowerCase()]);
+    return transformer.plainToClass(AppUser, dbResult)
   }
 
   public async getByRegistrationToken (token: string) {
-    const dbResult = await PgUtls.getOneFromDatabse('v_api_app_user', 'app_user_reg_token=$1', [token]);
-    return this.getOneEntityInstanceFromJson(dbResult, AppUser);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('v_api_app_user', 'app_user_reg_token=$1', [token]);
+    return transformer.plainToClass(AppUser, dbResult)
   }
 
   public async getByResetPasswordToken (token: string) {
-    const dbResult = await PgUtls.getOneFromDatabse('v_api_app_user', 'app_user_reset_pwd=$1', [token]);
-    return this.getOneEntityInstanceFromJson(dbResult, AppUser);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('v_api_app_user', 'app_user_reset_pwd=$1', [token]);
+    return transformer.plainToClass(AppUser, dbResult)
   }
 
   public async getSessionUserByProfileCode (profileType: string, profileCode: number) {
-    const dbResult = await PgUtls.getOneFromDatabse('v_api_app_user_social_net_profile', 'user_sn_profile_code=$1 and user_sn_profile_type=$2', [profileCode, profileType]);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('v_api_app_user_social_net_profile', 'user_sn_profile_code=$1 and user_sn_profile_type=$2', [profileCode, profileType]);
     if (!dbResult) {
       return null;
     }
 
-    const profile = this.getOneEntityInstanceFromJson(dbResult, AppUserSocialNetProfile);
+    const profile = transformer.plainToClass(AppUserSocialNetProfile, dbResult)
     const result = this.convertAppUserSocialNetProfileToSessionUser(profile)
 
     return result;
@@ -51,13 +52,13 @@ export class UserService extends BaseService {
   // Удалить
   public async delete (userId: number) {
     const delWhere = 'app_user_id=$1';
-    return PgUtls.delete('app_user', delWhere, [userId]);
+    return postgresWrapper.delete('app_user', delWhere, [userId]);
   }
 
   public async linkSessionUserToSocialNetwork (authStrategyType: string, sessionUser: SessionUser) {
     if (sessionUser.appUserId > 0 && sessionUser.userSnProfileId > 0 && authStrategyType) {
-      const dbResult = await PgUtls.getOneFromDatabse('v_api_app_user_social_net_profile', 'user_sn_profile_code=$1 and user_sn_profile_type=$2', [sessionUser.userSnProfileId, authStrategyType]);
-      const tryProfile = this.getOneEntityInstanceFromJson(dbResult, AppUserSocialNetProfile);
+      const dbResult = await postgresWrapper.oneOrNoneWhere('v_api_app_user_social_net_profile', 'user_sn_profile_code=$1 and user_sn_profile_type=$2', [sessionUser.userSnProfileId, authStrategyType]);
+      const tryProfile = transformer.plainToClass(AppUserSocialNetProfile, dbResult)
 
       const newAppUserSocialNetProfile: AppUserSocialNetProfile = tryProfile ? tryProfile : new AppUserSocialNetProfile();
       newAppUserSocialNetProfile.appUserId = sessionUser.appUserId;

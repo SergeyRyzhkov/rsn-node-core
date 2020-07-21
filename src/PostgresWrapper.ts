@@ -1,8 +1,8 @@
-import { AppConfig } from './Config';
+import { AppConfig } from './utils/Config';
 import { IMain, IDatabase } from 'pg-promise';
-import * as pgPromise from 'pg-promise';
-import { SortFilterPagination } from '../entities/SortFilterPagination';
-import * as camelcaseKeys from 'camelcase-keys';
+import pgPromise from 'pg-promise';
+import { SortFilterPagination } from './entities/SortFilterPagination';
+import camelcaseKeys from 'camelcase-keys';
 
 
 
@@ -69,7 +69,7 @@ enum TypeId {
   REGROLE = 4096
 }
 
-class PostgreWWrapper {
+class PostgresWrapper {
   private postgrePromise: IDatabase<{}>
 
   constructor () {
@@ -81,42 +81,40 @@ class PostgreWWrapper {
     };
 
     const pgp: IMain = pgPromise(initOptions);
-    pgp.pg.types.setTypeParser(TypeId.INT8, parseInt);
-    pgp.pg.types.setTypeParser(TypeId.NUMERIC, parseInt);
+    //  Нужно это ? pgp.pg.types.setTypeParser(TypeId.INT8, parseInt);
+    //    pgp.pg.types.setTypeParser(TypeId.NUMERIC, parseInt);
     this.postgrePromise = pgp(AppConfig.dbConfig);
   }
 
 
-  public async getAnyFromDatabase (dbViewName: string, sortFilterPagin?: SortFilterPagination, whereStmt?: string, whereParams?: any[]): Promise<any[]> {
-    const selectStmt = this.buildSelectStatement(dbViewName, sortFilterPagin, whereStmt);
+  public async any (query: string): Promise<any[]> {
+    return this.postgrePromise.any({
+      text: query
+    });
+  }
+
+  public async anyWhere (tableName: string, sortFilterPagin?: SortFilterPagination, whereStmt?: string, whereParams?: any[]): Promise<any[]> {
+    const selectStmt = this.buildSelectStatement(tableName, sortFilterPagin, whereStmt);
     return this.postgrePromise.any({
       text: selectStmt,
       values: whereParams
     });
   }
 
-  public async getOneFromDatabse (dbViewName: string, whereStmt?: string, whereParams?: any[]): Promise<any> {
-    const selectStmt = this.buildSelectStatement(dbViewName, null, whereStmt);
+  public async oneOrNoneWhere (tableName: string, whereStmt?: string, whereParams?: any[]): Promise<any> {
+    const selectStmt = this.buildSelectStatement(tableName, null, whereStmt);
     return this.postgrePromise.oneOrNone({
       text: selectStmt,
       values: whereParams
     });
   }
 
-  public async getOneOrNone (selectStmt: string, whereParams?: any[]) {
-    return this.postgrePromise.oneOrNone({
-      text: selectStmt,
-      values: whereParams
-    });
-  }
-
-  public async execOneFromDatabse (select: string): Promise<any> {
-    return this.postgrePromise.oneOrNone(select);
+  public async oneOrNone (query: string): Promise<any> {
+    return this.postgrePromise.oneOrNone(query);
   }
 
   public async delete (tableName: string, whereStmt: string, whereParams?: any[]) {
     const stmtp = `DELETE FROM ${tableName} WHERE ${whereStmt} `;
-    // const params = this.expandWhereParams(whereStmt, whereParams);
     const params = whereParams;
     return this.postgrePromise.none(stmtp, params);
   }
@@ -125,9 +123,9 @@ class PostgreWWrapper {
     return this.postgrePromise.func(functionName, params);
   }
 
-  public async getCountFrom (dbViewName: string, whereStmt?: string, whereParams?: any[]) {
+  public async getCountFrom (tableName: string, whereStmt?: string, whereParams?: any[]) {
     let count = 0;
-    const selectStmtp = `SELECT COUNT(1) FROM ${dbViewName}`;
+    const selectStmtp = `SELECT COUNT(1) FROM ${tableName}`;
     let whereAdd = '';
     if (whereStmt != null) {
       whereAdd = ` WHERE ${whereStmt} `;
@@ -149,8 +147,8 @@ class PostgreWWrapper {
     return this.postgrePromise.none(statement, params);
   }
 
-  private buildSelectStatement (dbViewName: string, sortFilterPagin?: SortFilterPagination, whereStmt?: string) {
-    const selectStmtp = `SELECT * FROM ${dbViewName}`;
+  private buildSelectStatement (tableName: string, sortFilterPagin?: SortFilterPagination, whereStmt?: string) {
+    const selectStmtp = `SELECT * FROM ${tableName}`;
     let whereAdd = '';
     let limitOffsetAdd = '';
     let sortAdd = '';
@@ -173,5 +171,5 @@ class PostgreWWrapper {
 
 }
 
-export const PgUtls = new PostgreWWrapper();
+export const postgresWrapper = new PostgresWrapper();
 

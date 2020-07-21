@@ -1,19 +1,21 @@
 import { BaseService } from '../BaseService';
 import { AppUserSession } from '@/entities/users/AppUserSession';
-import { TypeOrmManager } from '@/utils/TypeOrmManager';
-import { PgUtls } from '@/utils/PgUtils';
+import { TypeOrmManager } from '@/TypeOrmManager';
+import { postgresWrapper } from '@/PostgresWrapper';
 import { Guid } from '@/utils/Guid';
 import { AppConfig } from '@/utils/Config';
+import * as transformer from 'class-transformer';
 
 export class UserSessionService extends BaseService {
 
   public async getByToken (token: string) {
-    const dbResult = await PgUtls.getOneFromDatabse('v_api_app_user_session', 'user_session_token=$1', [token]);
-    return this.getOneEntityInstanceFromJson(dbResult, AppUserSession);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('v_api_app_user_session', 'user_session_token=$1', [token]);
+    return transformer.plainToClass(AppUserSession, dbResult)
   }
 
+
   public async getByUser (appUserId: number) {
-    return PgUtls.getAnyFromDatabase('v_api_app_user_session', null, 'app_user_id=$1', [appUserId]);
+    return postgresWrapper.anyWhere('v_api_app_user_session', null, 'app_user_id=$1', [appUserId]);
   }
 
   public async createSession (appUserId: number) {
@@ -38,22 +40,22 @@ export class UserSessionService extends BaseService {
 
   public async delete (token: string) {
     const delWhere = 'user_session_token=$1';
-    return PgUtls.delete('app_user_session', delWhere, [token]);
+    return postgresWrapper.delete('app_user_session', delWhere, [token]);
   }
 
   public async deleteAllByUser (appUserId: number) {
     const delWhere = 'user_session_token=$1';
-    return PgUtls.delete('app_user_id', delWhere, [appUserId]);
+    return postgresWrapper.delete('app_user_id', delWhere, [appUserId]);
   }
 
   public async lockSession (token: string) {
     const update = 'UPDATE app_user_session SET user_session_block_ind = 1 WHERE user_session_token=$1';
-    return PgUtls.execNone(update, [token]);
+    return postgresWrapper.execNone(update, [token]);
   }
 
   public async lockAllUserSession (appUserId: number) {
     const update = 'UPDATE app_user_session SET user_session_block_ind = 1 WHERE app_user_id=$1';
-    return PgUtls.execNone(update, [appUserId]);
+    return postgresWrapper.execNone(update, [appUserId]);
   }
 
   public isExpired (session: AppUserSession) {

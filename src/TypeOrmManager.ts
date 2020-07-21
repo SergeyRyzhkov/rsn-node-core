@@ -1,16 +1,17 @@
 import { createConnection, EntityManager, getManager } from 'typeorm';
+import { AppConfig } from './utils/Config';
 
 export class TypeOrmManager {
 
-  public static async initConnection (typeOrmConnectionConfig, entityList: any[]) {
+  private static connectionInit: boolean = false;
+
+  public static async initConnection (entityList: any[]) {
     if (!this.connectionInit) {
-      const config = { ...typeOrmConnectionConfig, entities: entityList };
+      const config = { ...AppConfig.dbConfig, entities: entityList };
       await createConnection(config);
       this.connectionInit = true;
     }
   }
-
-  private static connectionInit: boolean = false;
 
   public static get EntityManager (): EntityManager {
     return getManager();

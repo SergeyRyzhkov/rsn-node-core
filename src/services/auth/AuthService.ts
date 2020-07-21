@@ -1,4 +1,4 @@
-import { ServiceRegistry } from '../ServiceContainer';
+import { serviceRegistry } from '../../ServiceRegistry';
 import { logger } from '@/utils/Logger';
 import { AppConfig } from '@/utils/Config';
 import { BaseService } from '../BaseService';
@@ -42,26 +42,26 @@ export class AuthService extends BaseService {
         }
 
         const sessionToken = TokenUtil.getJwtId(accessToken);
-        const session: AppUserSession = await ServiceRegistry.getService(UserSessionService).getByToken(sessionToken);
+        const session: AppUserSession = await serviceRegistry.getService(UserSessionService).getByToken(sessionToken);
         // Если сессия не акутальна (протухла) или ее нет - на авторизацию
         if (!session) {
-          ServiceRegistry.getService(UserSessionService).delete(sessionToken);
+          serviceRegistry.getService(UserSessionService).delete(sessionToken);
           throw new UserSessionExpiredException('Session not found');
         }
 
-        if (ServiceRegistry.getService(UserSessionService).isExpired(session)) {
-          ServiceRegistry.getService(UserSessionService).delete(sessionToken);
+        if (serviceRegistry.getService(UserSessionService).isExpired(session)) {
+          serviceRegistry.getService(UserSessionService).delete(sessionToken);
           throw new UserSessionExpiredException('Session is expired');
         }
 
         // Если не подтвержден email
         if (session.appUserId > 0 && session.appUserRegVerifiedInd !== 1 && ((Date.now() - Date.parse(session.appUserRegDate)) > AppConfig.authConfig.emailVerify.options.expiresIn * 1000)) {
-          ServiceRegistry.getService(UserService).delete(session.appUserId);
+          serviceRegistry.getService(UserService).delete(session.appUserId);
           throw new UserSessionExpiredException('Registration is not verified');
         }
 
         // Все хорошо - увеличиваем дату окончания сессии
-        ServiceRegistry.getService(UserSessionService).refreshSession(session);
+        serviceRegistry.getService(UserSessionService).refreshSession(session);
         return TokenUtil.generateAccessToken(reqUser, session.userSessionToken);
       }
 
@@ -97,9 +97,9 @@ export class AuthService extends BaseService {
 
       if (logonResult.logonStatus === LogonStatus.Unknown) {
         // Ищем пользователя по идентификатору профиля
-        sessionUser = await ServiceRegistry.getService(UserService).getSessionUserByProfileCode(authStrategyType, profile.id);
+        sessionUser = await serviceRegistry.getService(UserService).getSessionUserByProfileCode(authStrategyType, profile.id);
         if (sessionUser && sessionUser.appUserId !== 0) {
-          appUser = await ServiceRegistry.getService(UserService).getByEmail(sessionUser.appUserEmail);
+          appUser = await serviceRegistry.getService(UserService).getByEmail(sessionUser.appUserEmail);
         }
       }
 
@@ -108,7 +108,7 @@ export class AuthService extends BaseService {
       if (logonResult.logonStatus === LogonStatus.Unknown && !appUser) {
         const tryEmail = profile.email ? profile.email : (profile.emails && profile.emails.length > 0 ? profile.emails[0].value : null);
         if (tryEmail) {
-          appUser = await ServiceRegistry.getService(UserService).getByEmail(tryEmail);
+          appUser = await serviceRegistry.getService(UserService).getByEmail(tryEmail);
         }
       }
 
@@ -122,15 +122,15 @@ export class AuthService extends BaseService {
 
       // Профиля в базе нет, Почты нет или не нашли в базе, но аутентификация через соц сеть прошла
       if (logonResult.logonStatus === LogonStatus.Unknown && !appUser && socialNetworkName) {
-        sessionUser = ServiceRegistry.getService(UserService).convertProfileToSessionUser(authStrategyType, profile)
+        sessionUser = serviceRegistry.getService(UserService).convertProfileToSessionUser(authStrategyType, profile)
         logonResult.makeUserNotFoundButSocialNetworkAuthOk(sessionUser, socialNetworkName);
       }
 
       // Есть пользователе с почтой или ранее профиль был связан, линкуем или обновляем профиль
       if (logonResult.logonStatus === LogonStatus.Unknown && appUser) {
-        const userSocProfile = await ServiceRegistry.getService(UserService).linkToSocialNetwork(appUser.appUserId, authStrategyType, profile);
+        const userSocProfile = await serviceRegistry.getService(UserService).linkToSocialNetwork(appUser.appUserId, authStrategyType, profile);
         if (userSocProfile) {
-          sessionUser = ServiceRegistry.getService(UserService).convertAppUserSocialNetProfileToSessionUser(userSocProfile);
+          sessionUser = serviceRegistry.getService(UserService).convertAppUserSocialNetProfileToSessionUser(userSocProfile);
           sessionUser.appUserRegVerifiedInd = appUser.appUserRegVerifiedInd;
           sessionUser.appUserRegDate = appUser.appUserRegDate;
           logonResult.makeOKResult(sessionUser);
@@ -151,7 +151,7 @@ export class AuthService extends BaseService {
     logonResult.makeUnknownResult();
 
     try {
-      const user = await ServiceRegistry.getService(UserService).getByEmail(username);
+      const user = await serviceRegistry.getService(UserService).getByEmail(username);
 
       if (!user) {
         logonResult.makeFailedResult();
@@ -169,9 +169,9 @@ export class AuthService extends BaseService {
           // Если на клиенте был авторизованный профиль соц.сети - линкуем
           if (logonResult.logonStatus === LogonStatus.Unknown && unlinkedSocialProfile && unlinkedSocialProfile.userSnProfileId > 0) {
             unlinkedSocialProfile.appUserId = user.appUserId;
-            const userSocProfile = await ServiceRegistry.getService(UserService).linkSessionUserToSocialNetwork(unlinkedSocialProfile.userSnProfileType, unlinkedSocialProfile);
+            const userSocProfile = await serviceRegistry.getService(UserService).linkSessionUserToSocialNetwork(unlinkedSocialProfile.userSnProfileType, unlinkedSocialProfile);
             if (userSocProfile) {
-              sessionUser = ServiceRegistry.getService(UserService).convertAppUserSocialNetProfileToSessionUser(userSocProfile);
+              sessionUser = serviceRegistry.getService(UserService).convertAppUserSocialNetProfileToSessionUser(userSocProfile);
               sessionUser.appUserRegVerifiedInd = user.appUserRegVerifiedInd;
               sessionUser.appUserRegDate = user.appUserRegDate;
             }
@@ -180,7 +180,7 @@ export class AuthService extends BaseService {
           // Все нормально.
           if (logonResult.logonStatus === LogonStatus.Unknown) {
             if (!sessionUser) {
-              sessionUser = ServiceRegistry.getService(UserService).convertAppUserToSessionUser(user);
+              sessionUser = serviceRegistry.getService(UserService).convertAppUserToSessionUser(user);
             }
             logonResult.makeOKResult(sessionUser);
           }
@@ -216,7 +216,7 @@ export class AuthService extends BaseService {
     }
 
     try {
-      const user = await ServiceRegistry.getService(UserService).getByEmail(userEmail);
+      const user = await serviceRegistry.getService(UserService).getByEmail(userEmail);
       if (user) {
         registrationResult.makeAlreadyExistsResult();
       } else {
@@ -227,14 +227,14 @@ export class AuthService extends BaseService {
         newAppUser.appUserRegVerifiedInd = 0;
         newAppUser.appUserBlockedInd = 0;
         newAppUser.appUserRegToken = Guid.newGuid();
-        await ServiceRegistry.getService(UserService).save(newAppUser);
+        await serviceRegistry.getService(UserService).save(newAppUser);
 
         // Если на клиенте был авторизованный профиль соц.сети - линкуем
         if (unlinkedSocialProfile && unlinkedSocialProfile.userSnProfileId > 0) {
           unlinkedSocialProfile.appUserId = newAppUser.appUserId;
-          const userSocProfile = await ServiceRegistry.getService(UserService).linkSessionUserToSocialNetwork(unlinkedSocialProfile.userSnProfileType, unlinkedSocialProfile);
+          const userSocProfile = await serviceRegistry.getService(UserService).linkSessionUserToSocialNetwork(unlinkedSocialProfile.userSnProfileType, unlinkedSocialProfile);
           if (userSocProfile) {
-            sessionUser = ServiceRegistry.getService(UserService).convertAppUserSocialNetProfileToSessionUser(userSocProfile);
+            sessionUser = serviceRegistry.getService(UserService).convertAppUserSocialNetProfileToSessionUser(userSocProfile);
             sessionUser.appUserRegVerifiedInd = newAppUser.appUserRegVerifiedInd;
             sessionUser.appUserRegDate = newAppUser.appUserRegDate;
           }
@@ -242,13 +242,13 @@ export class AuthService extends BaseService {
 
         // Если не было свзяи с соц.сетью, сессионого пользоваиеля сделаем из регистрации
         if (!sessionUser) {
-          sessionUser = ServiceRegistry.getService(UserService).convertAppUserToSessionUser(newAppUser);
+          sessionUser = serviceRegistry.getService(UserService).convertAppUserToSessionUser(newAppUser);
         }
 
         registrationResult.makeOKResult(sessionUser);
 
         // Отправляем письмо с запросом на подтверждение почты
-        ServiceRegistry.getService(AuthEmailService).sendVerifyRegistrationEmail(newAppUser.appUserEmail, newAppUser.appUserRegToken);
+        serviceRegistry.getService(AuthEmailService).sendVerifyRegistrationEmail(newAppUser.appUserEmail, newAppUser.appUserRegToken);
       }
       return registrationResult;
     } catch (err) {
@@ -260,7 +260,7 @@ export class AuthService extends BaseService {
 
   // Подтверждение регистрации
   public async confirmRegistration (token: string) {
-    const appUser = await ServiceRegistry.getService(UserService).getByRegistrationToken(token);
+    const appUser = await serviceRegistry.getService(UserService).getByRegistrationToken(token);
 
     if (!appUser) {
       return null;
@@ -269,14 +269,14 @@ export class AuthService extends BaseService {
     const tokenExpired = this.isRegistrationVerifyExpired(appUser);
     // Есть пользователь, но токен протух, удаляем его
     if (appUser && tokenExpired) {
-      await ServiceRegistry.getService(UserService).delete(appUser.appUserId);
+      await serviceRegistry.getService(UserService).delete(appUser.appUserId);
       return null;
     }
     // Есть пользователь, и токен НЕ протух
     if (appUser && !tokenExpired) {
       appUser.appUserRegVerifiedInd = 1;
       appUser.appUserRegToken = null;
-      const savedUser = await ServiceRegistry.getService(UserService).save(appUser);
+      const savedUser = await serviceRegistry.getService(UserService).save(appUser);
       return savedUser;
     }
     return null;
@@ -284,7 +284,7 @@ export class AuthService extends BaseService {
 
   // Сброс восстановление пароля. Проверка кода (токена)
   public async confirmResetPassword (token: string) {
-    const appUser = await ServiceRegistry.getService(UserService).getByResetPasswordToken(token);
+    const appUser = await serviceRegistry.getService(UserService).getByResetPasswordToken(token);
 
     if (!appUser) {
       return null;
@@ -293,7 +293,7 @@ export class AuthService extends BaseService {
     // Сбросим токен и дату
     appUser.appUserResetPwd = null;
     appUser.appUserResetPwdDate = null;
-    const savedUser = await ServiceRegistry.getService(UserService).save(appUser);
+    const savedUser = await serviceRegistry.getService(UserService).save(appUser);
 
     // Есть пользователь, но токен протух, очистим данные
     if (savedUser && !tokenExpired) {
@@ -309,16 +309,16 @@ export class AuthService extends BaseService {
   // Сброс.Восстановление пароля
   public async resetPassword (email: string) {
     // Ищем пользователя по мылу
-    let appUser = await ServiceRegistry.getService(UserService).getByEmail(email);
+    let appUser = await serviceRegistry.getService(UserService).getByEmail(email);
     if (appUser) {
       // Проверяем есть ли подтверждение регистрации
       const regVerifyExpired = this.isRegistrationVerifyExpired(appUser);
       if (!regVerifyExpired) {
         appUser.appUserResetPwd = Guid.newGuid();
         appUser.appUserResetPwdDate = new Date(Date.now()).toUTCString();
-        await ServiceRegistry.getService(UserService).save(appUser);
+        await serviceRegistry.getService(UserService).save(appUser);
 
-        ServiceRegistry.getService(AuthEmailService).sendResetPasswordEmail(appUser.appUserEmail, appUser.appUserResetPwd);
+        serviceRegistry.getService(AuthEmailService).sendResetPasswordEmail(appUser.appUserEmail, appUser.appUserResetPwd);
       } else {
         appUser = null;
       }
@@ -349,7 +349,7 @@ export class AuthService extends BaseService {
       const appUser = new AppUser();
       appUser.appUserId = sessionUser.appUserId;
       appUser.appUserPwdHash = bcrypt.hashSync(newPassword, AuthService.bcryptSaltRounds);
-      ServiceRegistry.getService(UserService).save(appUser);
+      serviceRegistry.getService(UserService).save(appUser);
     }
 
     if (oldPassword === newPassword) {
@@ -378,22 +378,22 @@ export class AuthService extends BaseService {
   // Отправляем повторное письмо с запросом на подтверждение почты
   public async sendConfirmRegistrationMessage (email: string) {
     // Ищем пользователя по мылу
-    const appUser = await ServiceRegistry.getService(UserService).getByEmail(email);
+    const appUser = await serviceRegistry.getService(UserService).getByEmail(email);
     if (appUser && appUser.appUserRegVerifiedInd !== 1) {
       appUser.appUserRegDate = new Date(Date.now()).toUTCString();
       appUser.appUserRegToken = Guid.newGuid();
-      await ServiceRegistry.getService(UserService).save(appUser);
-      ServiceRegistry.getService(AuthEmailService).sendVerifyRegistrationEmail(appUser.appUserEmail, appUser.appUserRegToken);
+      await serviceRegistry.getService(UserService).save(appUser);
+      serviceRegistry.getService(AuthEmailService).sendVerifyRegistrationEmail(appUser.appUserEmail, appUser.appUserRegToken);
     }
     return appUser;
   }
 
   public async logout (sessionToken: string) {
-    return ServiceRegistry.getService(UserSessionService).delete(sessionToken);
+    return serviceRegistry.getService(UserSessionService).delete(sessionToken);
   }
 
   public async logoutFromAll (appUserId: number) {
-    return ServiceRegistry.getService(UserSessionService).deleteAllByUser(appUserId)
+    return serviceRegistry.getService(UserSessionService).deleteAllByUser(appUserId)
   }
 
   public isRegistrationVerifyExpired (appUser: AppUser) {

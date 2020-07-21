@@ -6,7 +6,7 @@ import * as yandex from 'passport-yandex';
 import { AppConfig } from '@/utils/Config';
 import { ClientAppConfig } from '@/ClientAppConfig';
 import { BaseService } from '../BaseService';
-import { ServiceRegistry } from '../ServiceContainer';
+import { serviceRegistry } from '../../ServiceRegistry';
 import { AuthService } from './AuthService';
 
 
@@ -39,7 +39,7 @@ export class PassportProviders extends BaseService {
   private initLocalStrategy () {
     const strategy = new passportLocal.Strategy(AppConfig.authConfig.Local,
       (req, username, password, done) =>
-        ServiceRegistry.getService(AuthService).verifyByPassword(username, password, req.body.unlinkedSocialUser, done)
+        serviceRegistry.getService(AuthService).verifyByPassword(username, password, req.body.unlinkedSocialUser, done)
     );
     passport.use(PassportProviders.LOCAL, strategy);
   }
@@ -55,7 +55,7 @@ export class PassportProviders extends BaseService {
 
     const strategy = new google.Strategy(AppConfig.authConfig.Google,
       (req, accessToken, refreshToken, profile, done) => {
-        ServiceRegistry.getService(AuthService).verifyBySocialNetwork(strategyDescriptor.authType, profile, done)
+        serviceRegistry.getService(AuthService).verifyBySocialNetwork(strategyDescriptor.authType, profile, done)
       }
     );
     passport.use(strategyDescriptor.authType, strategy);
@@ -73,7 +73,7 @@ export class PassportProviders extends BaseService {
 
     const strategy = new facebook.Strategy(AppConfig.authConfig.Facebook,
       (req, accessToken, refreshToken, profile, done) => {
-        ServiceRegistry.getService(AuthService).verifyBySocialNetwork(strategyDescriptor.authType, profile, done)
+        serviceRegistry.getService(AuthService).verifyBySocialNetwork(strategyDescriptor.authType, profile, done)
       }
     );
     passport.use(strategyDescriptor.authType, strategy);
@@ -91,7 +91,7 @@ export class PassportProviders extends BaseService {
 
     const strategy = new yandex.Strategy(AppConfig.authConfig.Yandex,
       (accessToken, refreshToken, profile, done) => {
-        ServiceRegistry.getService(AuthService).verifyBySocialNetwork(strategyDescriptor.authType, profile, done)
+        serviceRegistry.getService(AuthService).verifyBySocialNetwork(strategyDescriptor.authType, profile, done)
       }
     );
     passport.use(strategyDescriptor.authType, strategy);

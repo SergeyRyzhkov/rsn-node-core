@@ -4,8 +4,8 @@ import { TokenUtil } from '@/utils/TokenUtil';
 import { SessionUser } from '@/entities/users/SessionUser';
 import { Unauthorized } from '@/exceptions/authErrors/Unauthorized';
 import { ResponseWrapper } from '@/controllers/ResponseWrapper';
-import { ServiceRegistry } from '@/services/ServiceContainer';
-import { AuthService } from '@/services/user/AuthService';
+import { serviceRegistry } from '@/ServiceRegistry';
+import { AuthService } from '@/services/auth/AuthService';
 
 export const authorized = () => {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -39,7 +39,7 @@ export const refreshAccessToken = () => {
     if (tokenHeader && tokenHeader.startsWith('Bearer ')) {
       const accessToken = tokenHeader.slice(7, tokenHeader.length);
       try {
-        const newAccessToken = await ServiceRegistry.getService(AuthService).refreshAccessToken(accessToken);
+        const newAccessToken = await serviceRegistry.getService(AuthService).refreshAccessToken(accessToken);
         req.user = TokenUtil.getSessionUserId(newAccessToken);
         BaseController.setJWTHeader(res, newAccessToken);
         next();

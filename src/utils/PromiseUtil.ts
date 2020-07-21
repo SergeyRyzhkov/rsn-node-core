@@ -53,3 +53,6 @@ const series = async (isSettled: boolean, items: any[], promiseFn: (arg: any) =>
   }
   return result;
 }
+
+
+// FIXME: пример в комменты здесь

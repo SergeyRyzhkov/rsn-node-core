@@ -6,52 +6,38 @@ import { BaseService } from './BaseService';
 
 export class MediaService extends BaseService {
 
-
-  public async saveSitePageImage (sitePageId: number, file: Express.Multer.File) {
-    const updateStmt = `UPDATE site_page SET site_page_banner = $1 where site_page_id = ${sitePageId}`;
-    return this.updateSmallOrBigImageFor(file, 'main', `page_${sitePageId}`, updateStmt);
+  public getExtension (file: Express.Multer.File) {
+    return mime.extension(file.mimetype);
   }
 
-  public createImageFullPathAndFileName (subDir: string, fileprefix: string, fileExt: string) {
-    const pathName = path.resolve('static', 'img', subDir);
-    const fileName = `${fileprefix}_${cuid()}.${fileExt}`;
-    if (!fs.existsSync(pathName)) {
-      fs.mkdirSync(pathName);
-    }
-    return [path.resolve(pathName, fileName), fileName];
-  }
-
-  public async saveFileFromRequestBody (file: Express.Multer.File, subDir: string, fileprefix: string) {
+  public async saveFileFromRequestBody (file: Express.Multer.File, fileName: string, ...pathSegments: string[]) {
     if (!!file && file.size > 0) {
       let fileExt = mime.extension(file.mimetype);
       fileExt = fileExt ? fileExt : 'txt';
 
-      const pathAndName = this.createImageFullPathAndFileName(subDir, fileprefix, fileExt);
+      const folder = path.resolve('static', ...pathSegments);
+      if (!fs.existsSync(folder)) {
+        fs.mkdirSync(folder, { recursive: true });
+      }
+      const filePath = path.resolve(folder, !!fileName ? fileName : file.originalname)
 
       const promise = new Promise((resolve, reject) => {
-        if (pathAndName[0]) {
-          fs.writeFile(pathAndName[0], file.buffer, (err) => {
+        if (fileName) {
+          fs.writeFile(filePath, file.buffer, (err) => {
             if (err) {
               reject(err);
             } else {
-              resolve(pathAndName);
+              resolve(filePath);
             }
           })
         } else {
-          resolve(pathAndName);
+          resolve(filePath);
         }
       }
       )
       return promise;
     } else {
       Promise.resolve(false);
-    }
-  }
-
-  private async updateSmallOrBigImageFor (file: Express.Multer.File, imageStaticSubFolderName: string, filePrefix: string, updateStmt: string) {
-    const pathAndName = await this.saveFileFromRequestBody(file, imageStaticSubFolderName, filePrefix);
-    if (pathAndName) {
-      return this.execNone(updateStmt, [`/img/${imageStaticSubFolderName}/${pathAndName[1]}`]);
     }
   }
 }

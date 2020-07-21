@@ -8,6 +8,7 @@ import { TokenUtil } from '@/utils/TokenUtil';
 import { ClientNotifyMessage } from './ClientNotifyMessage';
 import { createParamDecorator } from 'routing-controllers';
 import { DisplayFormatType } from '@/entities/DisplayFormatType';
+import { InternalServerError } from '@/exceptions/serverErrors/InternalServerError';
 
 export class BaseController {
 
@@ -18,7 +19,7 @@ export class BaseController {
     }
 
     const cookieOptions = {
-      expires: new Date(Date.now() + 300000),
+      expires: new Date(Date.now() + AppConfig.authConfig.cookieExpires),
       httpOnly: false,
       hostOnly: false,
       secure: false
@@ -39,17 +40,11 @@ export class BaseController {
     res.removeHeader(AppConfig.authConfig.jwtHeaderName);
   }
 
-  // public static getCurrentUserId (req: Request): number {
-  //   const test = req.user ? req.user : SessionUser.anonymousUser.appUserId;
-  //   return test;
-  // }
-
   public static setCurrentUserAnonymous (req: Request, res: Response) {
     if (req && req.user) {
       req.user = SessionUser.anonymousUser.appUserId;
     }
     BaseController.removeJWTHeader(res);
-    // BaseController.clearJWTCookie(res);
   }
 
   public static isUserUserAnonymous (req: Request) {
@@ -108,13 +103,14 @@ export class BaseController {
     const response = ResponseWrapper.createFailure(err, message, redirectUrl);
     return res.status(err.status).json(response);
   }
-  
-  public static setLocationToClient (response: Response, location: string) {
+
+  public static createRedirectResponse (response: Response, location: string) {
     const loc = process.env.NODE_ENV === 'development' ? `http://localhost:8010${location}` : location
     return this.createSuccessResponse({}, response.location(loc), 302);
   }
 }
-export const DisplayFormatTypeFromRequest = (options?: { required?: boolean }) => {
+
+export const displayFormatTypeFromRequest = (options?: { required?: boolean }) => {
   return createParamDecorator({
     required: options && options.required ? true : false,
     value: (action) => {
@@ -123,7 +119,7 @@ export const DisplayFormatTypeFromRequest = (options?: { required?: boolean }) =
   })
 }
 
-export const SortFilterPaginationFromRequest = (options?: { required?: boolean }) => {
+export const sortFilterPaginationFromRequest = (options?: { required?: boolean }) => {
   return createParamDecorator({
     required: options && options.required ? true : false,
     value: (action) => {

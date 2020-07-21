@@ -1,8 +1,12 @@
 import { AppConfig } from '@/utils/Config';
-import { MailSender } from '@/utils/MailSender';
+import { MailSender } from '@/services/mail/MailSender';
 import { BaseService } from '../BaseService';
+import { IMailMessage } from '../mail/IMailMessage';
 
 export class AuthEmailService extends BaseService {
+
+
+  private mailSender: MailSender = new MailSender(AppConfig.mail);
 
   // Отправляем письмо с подтверждением регистрации
   public sendVerifyRegistrationEmail (email: string, verifyToken: string) {
@@ -12,7 +16,7 @@ export class AuthEmailService extends BaseService {
       return template.replace('{{verify_link}}', verifyLink)
     }
 
-    MailSender.sendFromTemplate(email, '[ГосТорги 24] Добро пожаловать!', 'reg_confirm', format);
+    this.mailSender.sendFromTemplate(this.createMailMessage(email, '[ГосТорги 24] Добро пожаловать!'), 'reg_confirm', format);
   }
 
   // Отправляем письмо для восстановления пароля
@@ -23,6 +27,16 @@ export class AuthEmailService extends BaseService {
       return template.replace('{{reset_password_link}}', verifyLink)
     }
 
-    MailSender.sendFromTemplate(email, '[ГосТорги 24] Восстановление пароля', 'reset_password', format);
+    this.mailSender.sendFromTemplate(this.createMailMessage(email, '[ГосТорги 24] Восстановление пароля'), 'reset_password', format);
+  }
+
+  private createMailMessage (to: string, subject: string): IMailMessage {
+    return {
+      from: '',
+      to,
+      text: '',
+      html: '',
+      subject
+    }
   }
 }
