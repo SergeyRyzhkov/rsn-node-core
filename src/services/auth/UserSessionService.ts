@@ -1,5 +1,5 @@
 import { BaseService } from '../BaseService';
-import { AppUserSession } from '@/entities/users/AppUserSession';
+import { AppUserSession } from '@/entities/auth/AppUserSession';
 import { TypeOrmManager } from '@/TypeOrmManager';
 import { postgresWrapper } from '@/PostgresWrapper';
 import { Guid } from '@/utils/Guid';

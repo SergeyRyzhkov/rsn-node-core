@@ -1,7 +1,7 @@
 import { BaseController } from '@/controllers/BaseController';
 import * as passport from 'passport';
 import { Request, Response } from 'express';
-import { LogonResult, LogonStatus } from '@/entities/users/LogonResult';
+import { LogonResult, LogonStatus } from '@/entities/auth/LogonResult';
 import { Param, Post, Req, Res, JsonController, Get, BodyParam, OnUndefined } from 'routing-controllers';
 import { TokenUtil } from '@/utils/TokenUtil';
 import { Unauthorized } from '@/exceptions/authErrors/Unauthorized';

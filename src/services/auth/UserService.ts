@@ -1,9 +1,9 @@
 import { BaseService } from '../BaseService';
-import { AppUser } from '../../entities/users/AppUser';
+import { AppUser } from '../../entities/auth/AppUser';
 import { TypeOrmManager } from '@/TypeOrmManager';
 import { postgresWrapper } from '@/PostgresWrapper';
-import { AppUserSocialNetProfile } from '@/entities/users/AppUserSocialNetProfile';
-import { SessionUser } from '../../entities/users/SessionUser';
+import { AppUserSocialNetProfile } from '@/entities/auth/AppUserSocialNetProfile';
+import { SessionUser } from '../../entities/auth/SessionUser';
 import * as transformer from 'class-transformer';
 
 export class UserService extends BaseService {

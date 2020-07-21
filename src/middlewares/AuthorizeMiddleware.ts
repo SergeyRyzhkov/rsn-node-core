@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { BaseController } from '@/controllers/BaseController';
 import { TokenUtil } from '@/utils/TokenUtil';
-import { SessionUser } from '@/entities/users/SessionUser';
+import { SessionUser } from '@/entities/auth/SessionUser';
 import { Unauthorized } from '@/exceptions/authErrors/Unauthorized';
 import { ResponseWrapper } from '@/controllers/ResponseWrapper';
 import { serviceRegistry } from '@/ServiceRegistry';

@@ -1,7 +1,7 @@
 
 import * as jwt from 'jsonwebtoken';
 import { AppConfig } from '@/utils/Config';
-import { SessionUser } from '@/entities/users/SessionUser';
+import { SessionUser } from '@/entities/auth/SessionUser';
 import * as transformer from 'class-transformer';
 
 export class TokenUtil {
