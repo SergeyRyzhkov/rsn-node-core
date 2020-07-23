@@ -1,6 +1,6 @@
 {
   "name": "rsn-express-core",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Sergey Ryzhkov core Express (node) platform",
   "main": "index.js",
   "repository": "git@github.com:SergeyRyzhkov/rsn-node-core",
@@ -27,6 +27,7 @@
     "@types/passport-jwt": "latest",
     "@types/passport-local": "latest",
     "@types/node-fetch": "latest",
+    "@types/bcrypt": "3.0.0",
     "cross-env": "latest",
     "eslint": "latest",
     "fork-ts-checker-webpack-plugin": "^4.0.2",

@@ -2,7 +2,7 @@ import { serviceRegistry } from '../../ServiceRegistry';
 import { logger } from '@/utils/Logger';
 import { AppConfig } from '@/utils/Config';
 import { BaseService } from '../BaseService';
-import * as bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt';
 import { TokenUtil } from '@/utils/TokenUtil';
 import { InternalServerError } from '@/exceptions/serverErrors/InternalServerError';
 import { TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
