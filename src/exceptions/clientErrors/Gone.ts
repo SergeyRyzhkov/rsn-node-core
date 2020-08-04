@@ -6,7 +6,7 @@ import { Exception } from '../Exception';
 
 export class Gone extends Exception {
 
-  public name: string = 'GONE';
+  public name = 'GONE';
 
   constructor (message: string) {
     super(410, message);

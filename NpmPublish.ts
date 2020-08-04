@@ -12,7 +12,7 @@ class NpmPublish {
     npm_typings: path.resolve(__dirname, 'npm', 'types')
   };
 
-  private importSt: string = '';
+  private importSt = '';
 
   public publish () {
     this.cleanUp();

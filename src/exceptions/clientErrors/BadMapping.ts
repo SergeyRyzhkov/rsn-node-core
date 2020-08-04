@@ -9,7 +9,7 @@ import { Exception } from '../Exception';
  */
 export class BadMapping extends Exception {
 
-  public name: string = 'BAD_MAPPING';
+  public name = 'BAD_MAPPING';
 
   /**
    *

@@ -6,7 +6,7 @@ import { Exception } from '../Exception';
 
 export class PreconditionRequired extends Exception {
 
-  public name: string = 'PRECONDITION_REQUIRED';
+  public name = 'PRECONDITION_REQUIRED';
 
   constructor (message: string) {
     super(428, message);

@@ -9,4 +9,4 @@ export interface ISmtpOptions {
     user: string
     pass: string
   }
-};
+}

@@ -6,7 +6,7 @@ import { Exception } from '../Exception';
 
 export class BadGateway extends Exception {
 
-  public name: string = 'BAD_GATEWAY';
+  public name = 'BAD_GATEWAY';
 
   constructor (message: string) {
     super(502, message);

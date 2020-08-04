@@ -6,7 +6,7 @@ import {Exception} from '../Exception';
 
 export class SeeOther extends Exception {
 
-    public name: string = 'SEE_OTHER';
+    public name = 'SEE_OTHER';
 
     constructor(message: string) {
         super(303, message);

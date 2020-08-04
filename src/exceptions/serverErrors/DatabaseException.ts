@@ -7,7 +7,7 @@ import { InternalServerError } from './InternalServerError';
 
 export class DatabaseException extends InternalServerError {
 
-  public name: string = 'DATABASE_ERROR';
+  public name = 'DATABASE_ERROR';
 
   constructor (message: string, innerException?: any) {
     super(message, innerException);

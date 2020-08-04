@@ -6,7 +6,7 @@ import {Exception} from '../Exception';
 
 export class MultipleChoices extends Exception {
 
-    public name: string = 'MULTIPLE_CHOICES';
+    public name = 'MULTIPLE_CHOICES';
 
     constructor(message: string) {
         super(300, message);
