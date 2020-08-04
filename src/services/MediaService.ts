@@ -1,7 +1,6 @@
-import * as path from 'path';
-import * as fs from 'fs';
-import * as cuid from 'cuid';
-import * as mime from 'mime-types';
+import path from 'path';
+import fs from 'fs';
+import mime from 'mime-types';
 import { BaseService } from './BaseService';
 
 export class MediaService extends BaseService {

@@ -1,6 +1,5 @@
 import { BaseController } from './BaseController';
 import { Response } from 'express';
-import { ClientAppConfig } from '@/ClientAppConfig';
 import { AppConfig } from '@/utils/Config';
 import { JsonController, Get, Res, getMetadataArgsStorage, UseBefore } from 'routing-controllers';
 import { routingControllersToSpec } from 'routing-controllers-openapi'
@@ -8,11 +7,6 @@ import { authorized } from '@/middlewares/AuthorizeMiddleware';
 
 @JsonController('/app')
 export class AppController extends BaseController {
-
-  @Get('/client/config')
-  public async getClientAppConfig (@Res() response: Response) {
-    return BaseController.createSuccessResponse(ClientAppConfig, response);
-  }
 
   @UseBefore(authorized())
   @Get('/spec')
@@ -25,5 +19,13 @@ export class AppController extends BaseController {
     const spec = routingControllersToSpec(storage, options);
     return BaseController.createSuccessResponse(spec, response);
   }
+
+  // FIXME: Сделать единый типизированный конфиг, через классы. AppConfig с возможностью получить конфиг, загрузить
+  @UseBefore(authorized())
+  @Get('/spec')
+  public async reloadConfig (@Res() response: Response) {
+    return BaseController.createSuccessResponse({}, response);
+  }
+
 }
 

@@ -1,5 +1,5 @@
-import { SessionUser } from './SessionUser';
 import { Exception } from '@/exceptions/Exception';
+import { SessionUser } from '../user/SessionUser';
 // import { Exception } from '../../exceptions/Exception';
 
 export enum LogonStatus {
@@ -9,60 +9,67 @@ export enum LogonStatus {
   Failed,
   Blocked,
   Error,
-  Logoff,
-  Unknown
-};
+  Unknown,
+  RequereConfirmBySmsCode
+}
 
-export class LogonResult {
+export class AuthResult {
   public sessionUser: SessionUser = SessionUser.anonymousUser;
   public logonStatus: LogonStatus = LogonStatus.Unknown;
   public exception: Exception = null;
   public message: string;
+  public newAccessToken: string;
 
   public makeUnknownResult () {
     this.logonStatus = LogonStatus.Unknown;
   }
 
-  public makeOKResult (sessionUser: SessionUser) {
+  public makeOKResult (sessionUser: SessionUser, message: string) {
     this.logonStatus = LogonStatus.OK;
     this.exception = null;
     this.sessionUser = sessionUser;
+    this.message = message;
+    return this;
   }
 
   public makeShouldChangePasswordResult (sessionUser: SessionUser) {
     this.logonStatus = LogonStatus.ShouldChangePassword;
     this.exception = null;
     this.sessionUser = sessionUser;
+    return this;
   }
 
-  public makeUserNotFoundButSocialNetworkAuthOk (sessionUser: SessionUser, socialNetworkName: string) {
+  public makeUserNotFoundButSocialNetworkAuthOk (sessionUser: SessionUser) {
     this.logonStatus = LogonStatus.UserNotFoundButSocialNetworkAuthOK;
     this.sessionUser = sessionUser;
-    this.message = `Профиль не связан с какой-либо учетной записью на сайте. Войдите на сайт или зарегистрируйтесь, чтобы заходить в один аккаунт вводя логин и пароль или используя ${socialNetworkName}`;
+    return this;
   }
 
-  public makeFailedResult () {
+  public makeFailedResult (message?: string) {
     this.logonStatus = LogonStatus.Failed;
     this.sessionUser = SessionUser.anonymousUser;
-    this.message = 'Ошибка входа. Неверный идентификатор пользователя или пароль';
+    this.message = message;
+    return this;
   }
 
-  public makeBlockedResult () {
+  public makeBlockedResult (message: string) {
     this.logonStatus = LogonStatus.Blocked;
     this.sessionUser = SessionUser.anonymousUser;
-    this.message = 'Учетная запись заблокирована';
+    this.message = message;
+    return this;
   }
 
   public makeErrorResult (exception: Exception) {
     this.logonStatus = LogonStatus.Error;
     this.exception = exception;
     this.sessionUser = SessionUser.anonymousUser;
-    this.message = 'Ошибка входа';
+    return this;
   }
 
-  public makeLogoffResult () {
-    this.logonStatus = LogonStatus.Logoff;
-    this.sessionUser = SessionUser.anonymousUser;
-    this.message = 'Не авторизован';
+  public makeRequereConfirmBySmsCode (sessionUser: SessionUser, message: string) {
+    this.logonStatus = LogonStatus.RequereConfirmBySmsCode;
+    this.sessionUser = sessionUser;
+    this.message = message;
+    return this;
   }
 }

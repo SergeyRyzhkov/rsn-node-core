@@ -7,7 +7,7 @@ export class Exception extends Error {
    * Exception type
    * @type {string}
    */
-  public type: string = 'HTTP_EXCEPTION';
+  public type = 'HTTP_EXCEPTION';
   /**
    * Stack calling
    */
@@ -24,7 +24,7 @@ export class Exception extends Error {
    * @param message
    * @param innerException
    */
-  constructor (status: any, message?: string, innerException?: any) {
+  constructor(status: any, message?: string, innerException?: any) {
     super(message);
     this.status = status;
     this.message = message || '';

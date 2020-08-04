@@ -1,6 +1,6 @@
 import { createLogger, format, transports } from 'winston';
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 
 const logDir = 'log';
 

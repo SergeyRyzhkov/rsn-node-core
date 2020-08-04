@@ -1,46 +1,52 @@
 import { ExpressApplication } from './ExpressApplication';
-import { AppConfig } from './utils/Config';
-import { fetchPromise } from './FetchPromise';
+import { serviceRegistry } from './ServiceRegistry';
+import { ResetChangePwdService } from './services/security/reset/ResetChangePwdService';
+import { UserService } from './services/security/user/UserService';
+import { UserSessionService } from './services/security/user/UserSessionService';
+import { AuthService } from './services/security/auth/AuthService';
+import { RegistrationService } from './services/security/registration/RegistrationService';
+import { PassportProviders } from './services/security/PassportProviders';
+import { MediaService } from './services/MediaService';
+import { AppController } from './controllers/AppController';
+import { AuthController } from './controllers/security/AuthController';
+import { RegistrationController } from './controllers/security/RegistrationController';
+import { ResetChangePwdController } from './controllers/security/ResetChangePwdController';
+import { AppUser } from './models/security/AppUser';
+import { AppUserSession } from './models/security/AppUserSession';
+import { AppUserSocialNetProfile } from './models/security/AppUserSocialNetProfile';
 
 class ExampleApp {
 
-  public async start () {
+    public async start () {
+        const controllers = [AppController, AuthController, RegistrationController, ResetChangePwdController];
+        const entities = [AppUser, AppUserSession, AppUserSocialNetProfile];
 
-    const app: ExpressApplication = new ExpressApplication();
+        const app: ExpressApplication = new ExpressApplication();
 
+        serviceRegistry.register(UserService).
+            register(UserSessionService).
+            register(AuthService).
+            register(RegistrationService).
+            register(ResetChangePwdService).
+            register(PassportProviders).
+            register(MediaService);
 
-    await app.start();
+        app.addAppControllers(controllers).addTypeOrmEntityMetadata(entities);
 
-    const domainName = 'baltros';
-    const apiKey = '745263557ffc2116bca0667d327bbf2b';
-    const uri = `http://${domainName}.intrumnet.com:81/sharedapi/stock/filter`;
+        await app.start();
 
-    const body = `apikey=${apiKey}&params%5Btype%5D=1`
+        // const result = await new RegistrationService().registerNewUser('79218941537', 'SergeyRyzhkov76@gmail.comU1', null);
+        //  new RegistrationService().confirmRegistrationByEmail(token)
+        // const result1 = await new RegistrationService().confirmRegistrationByEmail('90c52480-0449-4e3a-81e0-804fff7a4391');
 
-    const options = {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    };
+        // const result2 = await new RegistrationService().confirmRegistrationBySms(55555, 21)
 
-    const ss = await fetchPromise.post(uri, options, body);
+        // const rr = '';
 
-
-    try {
-      const ss1 = await fetchPromise.post(`http://${domainName}uuuuu`, options, body);
-    } catch (err) {
-      const rr1 = ''
     }
-
-    const rr13 = ''
-
-
-  }
 }
 
 (async () => {
-  new ExampleApp().start();
+    new ExampleApp().start();
 }
 )()
-
-

@@ -1,14 +1,14 @@
 import { ISmsMessage } from './ISmsMessage';
 import { SmsTransport } from './SmsTransport';
 import { SmsResponse } from './SmsResponse';
-import { fetchPromise } from '@/FetchPromise';
+import { fetchWrapper } from '@/FetchWrapper';
 
 export class SmsRuTransport extends SmsTransport {
 
   private rootUrl = 'https://sms.ru/sms/';
   private apiKey: string;
 
-  constructor (apiKey: string) {
+  constructor(apiKey: string) {
     super();
     this.apiKey = apiKey;
   }
@@ -45,7 +45,7 @@ export class SmsRuTransport extends SmsTransport {
 
   private doRequest (command: string, params: string) {
     const url = `${this.rootUrl}${command}?api_id=${this.apiKey}&json=1&${params}`;
-    return fetchPromise.get(url);
+    return fetchWrapper.get(url);
   }
 
 }

@@ -1,7 +1,7 @@
 import { AppConfig } from './utils/Config';
 import { IMain, IDatabase } from 'pg-promise';
 import pgPromise from 'pg-promise';
-import { SortFilterPagination } from './entities/SortFilterPagination';
+import { SortPagination } from './models/SortPagination';
 import camelcaseKeys from 'camelcase-keys';
 
 
@@ -70,9 +70,9 @@ enum TypeId {
 }
 
 class PostgresWrapper {
-  private postgrePromise: IDatabase<{}>
+  private postgrePromise: IDatabase<any>
 
-  constructor () {
+  constructor() {
     const initOptions = {
       ...AppConfig.dbConfig.pgOptions,
       receive (data, result, e) {
@@ -93,7 +93,7 @@ class PostgresWrapper {
     });
   }
 
-  public async anyWhere (tableName: string, sortFilterPagin?: SortFilterPagination, whereStmt?: string, whereParams?: any[]): Promise<any[]> {
+  public async anyWhere (tableName: string, sortFilterPagin?: SortPagination, whereStmt?: string, whereParams?: any[]): Promise<any[]> {
     const selectStmt = this.buildSelectStatement(tableName, sortFilterPagin, whereStmt);
     return this.postgrePromise.any({
       text: selectStmt,
@@ -147,7 +147,7 @@ class PostgresWrapper {
     return this.postgrePromise.none(statement, params);
   }
 
-  private buildSelectStatement (tableName: string, sortFilterPagin?: SortFilterPagination, whereStmt?: string) {
+  private buildSelectStatement (tableName: string, sortFilterPagin?: SortPagination, whereStmt?: string) {
     const selectStmtp = `SELECT * FROM ${tableName}`;
     let whereAdd = '';
     let limitOffsetAdd = '';

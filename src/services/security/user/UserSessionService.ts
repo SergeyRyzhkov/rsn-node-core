@@ -1,16 +1,16 @@
-import { BaseService } from '../BaseService';
-import { AppUserSession } from '@/entities/auth/AppUserSession';
+import { BaseService } from '../../BaseService';
+import { AppUserSession } from '@/models/security/AppUserSession';
 import { TypeOrmManager } from '@/TypeOrmManager';
 import { postgresWrapper } from '@/PostgresWrapper';
 import { Guid } from '@/utils/Guid';
 import { AppConfig } from '@/utils/Config';
-import transformer from 'class-transformer';
+import { plainToClass } from 'class-transformer';
 
 export class UserSessionService extends BaseService {
 
   public async getByToken (token: string) {
     const dbResult = await postgresWrapper.oneOrNoneWhere('v_api_app_user_session', 'user_session_token=$1', [token]);
-    return transformer.plainToClass(AppUserSession, dbResult)
+    return plainToClass(AppUserSession, dbResult)
   }
 
 
@@ -18,6 +18,7 @@ export class UserSessionService extends BaseService {
     return postgresWrapper.anyWhere('v_api_app_user_session', null, 'app_user_id=$1', [appUserId]);
   }
 
+  // FIXME: В настройки параметры
   public async createSession (appUserId: number) {
     const result = new AppUserSession();
     result.appUserId = appUserId;
@@ -28,6 +29,7 @@ export class UserSessionService extends BaseService {
   }
 
 
+  // FIXME: А тут не надо изменять userSessionToken ?
   public async refreshSession (existsSession: AppUserSession) {
     existsSession.userSessionUpdatedAt = new Date(Date.now()).toUTCString();
     existsSession.userSessionExpiredAt = new Date(Date.now() + AppConfig.authConfig.JWT.refresh.options.expiresIn * 1000).toUTCString();
@@ -58,6 +60,7 @@ export class UserSessionService extends BaseService {
     return postgresWrapper.execNone(update, [appUserId]);
   }
 
+  // FIXME: привести к единому, чтобы не умножать и т.д.
   public isExpired (session: AppUserSession) {
     return Date.now() - Date.parse(session.userSessionExpiredAt) > AppConfig.authConfig.JWT.refresh.options.expiresIn * 1000;
   }

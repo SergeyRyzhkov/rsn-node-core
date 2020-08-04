@@ -1,10 +1,10 @@
 
-import * as jwt from 'jsonwebtoken';
+import jwt, { } from 'jsonwebtoken';
 import { AppConfig } from '@/utils/Config';
-import { SessionUser } from '@/entities/auth/SessionUser';
-import * as transformer from 'class-transformer';
+import { plainToClass } from 'class-transformer';
+import { SessionUser } from './user/SessionUser';
 
-export class TokenUtil {
+export class JWTHelper {
 
   public static generateAccessToken (sessionUser: SessionUser, sessionId: string): string {
     const payload = { ...sessionUser };
@@ -33,19 +33,19 @@ export class TokenUtil {
     }
   }
 
-  public static getSessionUserId (token: string): number {
+  public static getTokenUserId (token: string): number {
     const payload = jwt.decode(token, { complete: false, json: true }) as any;
     if (payload && payload.jti) {
-      const { appUserId } = payload
+      const { appUserId } = payload;
       return appUserId;
     }
     return 0;
   }
 
-  public static getSessionUser (token: string): SessionUser {
+  public static getTokenUser (token: string): SessionUser {
     const payload = jwt.decode(token, { complete: false, json: true });
     this.deleteClaimProperties(payload);
-    return transformer.plainToClass(SessionUser, payload)
+    return plainToClass(SessionUser, payload)
   }
 
   // FIXME: Wthat is the options // mutatePayload ?

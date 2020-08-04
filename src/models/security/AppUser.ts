@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity('app_user')
 export class AppUser {
@@ -18,9 +18,9 @@ export class AppUser {
 
   @Column('text', {
     nullable: true,
-    name: 'app_user_email'
+    name: 'app_user_login'
   })
-  public appUserEmail: string;
+  public appUserLogin: string;
 
 
   @Column('text', {
@@ -64,15 +64,20 @@ export class AppUser {
   })
   public appUserResetPwd: string;
 
-
-  @Column({
-    name: 'app_user_reset_exp_date'
-  })
-  public appUserResetExpDate: string;
-
-
   @Column({
     name: 'app_user_reset_pwd_date'
   })
   public appUserResetPwdDate: string;
+
+  @Column({
+    name: 'app_user_sms_code'
+  })
+  public appUserSmsCode: number;
+
+  @Column({
+    name: 'app_user_phone'
+  })
+  public appUserPhone: string;
+
+
 }

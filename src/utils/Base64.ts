@@ -1,6 +1,6 @@
-import * as fs from 'fs';
+import fs from 'fs';
 
-export  class Base64 {
+export class Base64 {
 
   public static async encode (filePath: string) {
     const promise = new Promise((resolve, reject) => {

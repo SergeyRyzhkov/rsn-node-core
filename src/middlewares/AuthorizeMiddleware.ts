@@ -1,22 +1,24 @@
 import { Request, Response, NextFunction } from 'express';
 import { BaseController } from '@/controllers/BaseController';
-import { TokenUtil } from '@/utils/TokenUtil';
-import { SessionUser } from '@/entities/auth/SessionUser';
-import { Unauthorized } from '@/exceptions/authErrors/Unauthorized';
+import { JWTHelper } from '@/services/security/JWTHelper';
 import { ResponseWrapper } from '@/controllers/ResponseWrapper';
 import { serviceRegistry } from '@/ServiceRegistry';
-import { AuthService } from '@/services/auth/AuthService';
+import { AuthService } from '@/services/security/auth/AuthService';
+import { AppConfig } from '@/utils/Config';
+import { ForbiddenException } from '@/exceptions/authErrors/ForbiddenException';
+
 
 export const authorized = () => {
   return async (req: Request, res: Response, next: NextFunction) => {
     if (!BaseController.isUserAuthorized(req)) {
-      const error = new Unauthorized(`${req.ip} unauthorized`);
-      next(error);
+      next(new ForbiddenException('ForbiddenException'));
     } else {
       next();
     }
   }
 }
+
+
 
 export const authorizedOrEmptyResult = () => {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -29,34 +31,25 @@ export const authorizedOrEmptyResult = () => {
   }
 }
 
-export const refreshAccessToken = () => {
+
+export const verifyAndUpdateAccessToken = () => {
   return async (req: Request, res: Response, next: NextFunction) => {
 
-    BaseController.setCurrentUserAnonymous(req, res);
-
-    const tokenHeader = req.get('x-access-token') || req.get('authorization');
-
-    if (tokenHeader && tokenHeader.startsWith('Bearer ')) {
-      const accessToken = tokenHeader.slice(7, tokenHeader.length);
+    const jwtCookie = req.cookies[AppConfig.authConfig.cookieName];
+    if (!!jwtCookie) {
       try {
-        const newAccessToken = await serviceRegistry.getService(AuthService).refreshAccessToken(accessToken);
-        req.user = TokenUtil.getSessionUserId(newAccessToken);
-        BaseController.setJWTHeader(res, newAccessToken);
-        next();
+        const jwtObj = JSON.parse(jwtCookie);
+        const jwt = jwtObj.accessToken;
+        const newAccessToken = await serviceRegistry.getService(AuthService).verifyAndUpdateAccessToken(jwt);
+        const sessionUser = JWTHelper.getTokenUser(newAccessToken);
+
+        BaseController.setSessiontUser(sessionUser, req);
+        BaseController.setJWTCookie(res, newAccessToken);
+
       } catch (err) {
-        req.user = SessionUser.anonymousUser.appUserId;
-        next();
+        BaseController.setSessionUserAnonymous(req, res)
       }
-    } else {
-      BaseController.setCurrentUserAnonymous(req, res)
-      next();
     }
+    next();
   }
 }
-
-
-// Надо отделить.
-//   Одно - обновление токена,
-//     Другое - проврека авторизованности
-//
-// заодно может сдесь и провреять, подтверждено ли мыло ?

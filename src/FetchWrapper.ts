@@ -3,18 +3,21 @@ import fetch from 'node-fetch';
 import * as HttpProxyAgent from 'http-proxy-agent';
 import * as HttpsProxyAgent from 'https-proxy-agent';
 
-class FetchPromise {
+// TODO: Сделать отдельно ля json, body,text, blob? Или в результат прописывать  fetchResult?
+// TODO: Скачивание файла и запись в путь 
+// TODO: Patch отдельно сденлать
+class FetchWrapper {
 
-  public async get (url: string, options?: {}, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
+  public async get (url: string, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
     const res = this.doFetch(url, { ...options, ...{ method: 'GET' } }, proxy);
     return this.processRequest(res);
   }
 
-  public async put (url: string, options?: {}, body?: {}, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
+  public async put (url: string, options?: any, body?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
     return this.putOrPost(false, url, options, body, proxy);
   }
 
-  public async post (url: string, options?: {}, body?: {}, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
+  public async post (url: string, options?: any, body?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
     return this.putOrPost(true, url, options, body, proxy);
   }
 
@@ -28,12 +31,12 @@ class FetchPromise {
     return this.post(url, formData, { ...options, ...conf }, proxy);
   }
 
-  public async delete (url: string, options?: {}, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
+  public async delete (url: string, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
     const res = this.doFetch(url, { ...options, ...{ method: 'DELETE' } }, proxy);
     return this.processRequest(res);
   }
 
-  private putOrPost (isPost: boolean, url: string, options?: {}, body?: {}, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
+  private putOrPost (isPost: boolean, url: string, options?: any, body?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
     const mergedOptions = { ...options, ...{ method: isPost ? 'POST' : 'PUT' }, ... { body: !!body ? (String(body) === body ? body : JSON.stringify(body)) : null } };
     const res = this.doFetch(url, mergedOptions, proxy);
     return this.processRequest(res);
@@ -44,7 +47,7 @@ class FetchPromise {
     try {
       const result = await fetchResult;
 
-      response.data = await result.json()
+      response.data = await result.json();
       response.status = result.status;
       response.statusText = result.statusText;
 
@@ -59,7 +62,7 @@ class FetchPromise {
     }
   }
 
-  private doFetch (url: string, options?: {}, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }): Promise<Response> {
+  private doFetch (url: string, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }): Promise<Response> {
     const defaultOptions: any = {
       timeout: 5000,
       headers: {
@@ -84,5 +87,5 @@ class FetchPromise {
 
 }
 
-export const fetchPromise = new FetchPromise();
+export const fetchWrapper = new FetchWrapper();
 

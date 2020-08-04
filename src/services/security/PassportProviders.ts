@@ -1,13 +1,12 @@
-import * as passport from 'passport';
-import * as facebook from 'passport-facebook';
-import * as google from 'passport-google-oauth2';
-import * as passportLocal from 'passport-local';
-import * as yandex from 'passport-yandex';
+import passport from 'passport';
+import facebook from 'passport-facebook';
+import google from 'passport-google-oauth2';
+import passportLocal from 'passport-local';
+import yandex from 'passport-yandex';
 import { AppConfig } from '@/utils/Config';
-import { ClientAppConfig } from '@/ClientAppConfig';
 import { BaseService } from '../BaseService';
 import { serviceRegistry } from '../../ServiceRegistry';
-import { AuthService } from './AuthService';
+import { AuthService } from './auth/AuthService';
 
 
 interface PassportStrategyDescriptor {
@@ -23,26 +22,28 @@ export class PassportProviders extends BaseService {
   public static LOCAL = 'login';
 
   public static getProviderNameByAuthType (authType: string) {
-    const tryFind = ClientAppConfig.enabledAuthProviders.find((x) => x.authType === authType);
-    return tryFind ? tryFind.name : null;
+    // const tryFind = ClientAppConfig.enabledAuthProviders.find((x) => x.authType === authType);
+    // return tryFind ? tryFind.name : null;
+
+    return true
   }
 
-  public initialize (config: any) {
-    this.initLocalStrategy();
+  public initialize () {
+    //  this.initLocalStrategy();
     const google = this.initGoogleStrategy();
     const facebook = this.initFacebookStrategy();
     const yandex = this.initYandexStrategy();
-    config.enabledAuthProviders = [yandex, google, facebook];
+    //    config.enabledAuthProviders = [yandex, google, facebook];
   }
 
-  // =====
-  private initLocalStrategy () {
-    const strategy = new passportLocal.Strategy(AppConfig.authConfig.Local,
-      (req, username, password, done) =>
-        serviceRegistry.getService(AuthService).verifyByPassword(username, password, req.body.unlinkedSocialUser, done)
-    );
-    passport.use(PassportProviders.LOCAL, strategy);
-  }
+  // FIXME: unlinkedSocialUser - как-то криво, может это в контроллера надо делать?
+  // private initLocalStrategy () {
+  //   const strategy = new passportLocal.Strategy(AppConfig.authConfig.Local,
+  //     (req, username, password, done) =>
+  //       serviceRegistry.getService(AuthService).loginByPassword(username, password, req.body.unlinkedSocialUser, done)
+  //   );
+  //   passport.use(PassportProviders.LOCAL, strategy);
+  // }
 
   private initGoogleStrategy () {
     const strategyDescriptor: PassportStrategyDescriptor = {
@@ -55,7 +56,7 @@ export class PassportProviders extends BaseService {
 
     const strategy = new google.Strategy(AppConfig.authConfig.Google,
       (req, accessToken, refreshToken, profile, done) => {
-        serviceRegistry.getService(AuthService).verifyBySocialNetwork(strategyDescriptor.authType, profile, done)
+        serviceRegistry.getService(AuthService).loginBySocialNetwork(strategyDescriptor.authType, profile, done)
       }
     );
     passport.use(strategyDescriptor.authType, strategy);
@@ -73,7 +74,7 @@ export class PassportProviders extends BaseService {
 
     const strategy = new facebook.Strategy(AppConfig.authConfig.Facebook,
       (req, accessToken, refreshToken, profile, done) => {
-        serviceRegistry.getService(AuthService).verifyBySocialNetwork(strategyDescriptor.authType, profile, done)
+        serviceRegistry.getService(AuthService).loginBySocialNetwork(strategyDescriptor.authType, profile, done)
       }
     );
     passport.use(strategyDescriptor.authType, strategy);
@@ -91,7 +92,7 @@ export class PassportProviders extends BaseService {
 
     const strategy = new yandex.Strategy(AppConfig.authConfig.Yandex,
       (accessToken, refreshToken, profile, done) => {
-        serviceRegistry.getService(AuthService).verifyBySocialNetwork(strategyDescriptor.authType, profile, done)
+        serviceRegistry.getService(AuthService).loginBySocialNetwork(strategyDescriptor.authType, profile, done)
       }
     );
     passport.use(strategyDescriptor.authType, strategy);

@@ -3,7 +3,7 @@ import { ClientNotifyMessage } from './ClientNotifyMessage';
 
 export class ResponseWrapper {
 
-  public static createSuccsess (data: {}, status = 200, message?: ClientNotifyMessage, redirectUrl?: string): ResponseWrapper {
+  public static createSuccsess (data: any, status = 200, message?: ClientNotifyMessage, redirectUrl?: string): ResponseWrapper {
     const responseData = new ResponseWrapper(true, data, 'OK', status, redirectUrl);
     if (message) {
       responseData.showNotify = message;
@@ -20,13 +20,13 @@ export class ResponseWrapper {
   }
 
   public success: boolean;
-  public data: {};
+  public data: any;
   public message: string;
   public status: number;
   public redirectUrl: string | null
   public showNotify: ClientNotifyMessage
 
-  constructor (success: boolean, data = {}, message = '', status: number, redirectUrl: string | null) {
+  constructor(success: boolean, data = {}, message = '', status: number, redirectUrl: string | null) {
     this.success = success;
     this.data = data;
     this.message = message;

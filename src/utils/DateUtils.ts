@@ -29,7 +29,7 @@ export class DateUtils {
   /**
    * Converts given value into date object.
    */
-  public static mixedDateToDate (mixedDate: Date | string, toUtc: boolean = false, useMilliseconds = true): Date {
+  public static mixedDateToDate (mixedDate: Date | string, toUtc = false, useMilliseconds = true): Date {
     let date = typeof mixedDate === 'string' ? new Date(mixedDate) : mixedDate;
 
     if (toUtc) {
@@ -54,7 +54,7 @@ export class DateUtils {
   /**
    * Converts given value into time string in a "HH:mm:ss" format.
    */
-  public static mixedDateToTimeString (value: Date | any, skipSeconds: boolean = false): string | any {
+  public static mixedDateToTimeString (value: Date | any, skipSeconds = false): string | any {
     if (value instanceof Date) {
       return this.formatZerolessValue(value.getHours()) +
         ':' + this.formatZerolessValue(value.getMinutes()) +
@@ -89,7 +89,7 @@ export class DateUtils {
   /**
    * Converts given string value with "-" separator into a "HH:mm:ss" format.
    */
-  public static mixedTimeToString (value: string | any, skipSeconds: boolean = false): string | any {
+  public static mixedTimeToString (value: string | any, skipSeconds = false): string | any {
     value = value instanceof Date ? (value.getHours() + ':' + value.getMinutes() + (!skipSeconds ? ':' + value.getSeconds() : '')) : value;
     if (typeof value === 'string') {
       return value.split(':')

@@ -1,5 +1,5 @@
-import { SessionUser } from './SessionUser';
 import { Exception } from '@/exceptions/Exception';
+import { SessionUser } from '../user/SessionUser';
 
 export enum ChangePasswordStatus {
   OK,
@@ -7,10 +7,10 @@ export enum ChangePasswordStatus {
   OldAndNewPasswordAreEquals,
   Failed,
   Unknown
-};
+}
 
-
-export class ChangePasswordResult {
+// FIXME: Messages in config
+export class ChangePwdResult {
   public sessionUser: SessionUser = SessionUser.anonymousUser;
   public status: ChangePasswordStatus = ChangePasswordStatus.Unknown;
   public exception: Exception = null;

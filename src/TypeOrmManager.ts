@@ -3,7 +3,7 @@ import { AppConfig } from './utils/Config';
 
 export class TypeOrmManager {
 
-  private static connectionInit: boolean = false;
+  private static connectionInit = false;
 
   public static async initConnection (entityList: any[]) {
     if (!this.connectionInit) {
