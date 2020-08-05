@@ -6,7 +6,7 @@ import { isPasswordStrenght } from '@/utils/Validators';
 import { AppUser } from '../../../models/security/AppUser';
 import { AuthService } from '../auth/AuthService';
 import { BaseService } from '@/services/BaseService';
-import { SessionUser } from '../user/SessionUser';
+import { SessionUser } from '../../../models/security/SessionUser';
 
 export class ResetChangePwdService extends BaseService {
 
@@ -66,7 +66,7 @@ export class ResetChangePwdService extends BaseService {
 
         // Пробуем авторизовать, если это не сброс пароля был через 2FA (sessionUser.reset) далее в verifyDone
         if (сhangePasswordResult.status === ChangePasswordStatus.Unknown && !sessionUser.reset) {
-            await serviceRegistry.getService(AuthService).loginByPassword(sessionUser.appUserLogin, oldPassword, null);
+            await serviceRegistry.getService(AuthService).loginByPassword(sessionUser.appUserName, oldPassword, null);
         }
 
         //  (sessionUser.reset) - был сброс пароля через 2FA - прсото меняем пароль

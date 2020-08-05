@@ -4,7 +4,7 @@ export class SessionUser {
   public static anonymousUser: SessionUser = new SessionUser();
 
   public appUserId = 0;
-  public appUserLogin = 'Гость';
+  public appUserName = 'Гость';
   public appUserBlockedInd = 0;
   public appUserRegDate: string;
   public appUserRegVerifiedInd: number;

@@ -4,7 +4,7 @@ import { postgresWrapper } from '@/PostgresWrapper';
 import { AppUserSocialNetProfile } from '@/models/security/AppUserSocialNetProfile';
 import { plainToClass } from 'class-transformer';
 import { AppUser } from '../../../models/security/AppUser';
-import { SessionUser } from './SessionUser';
+import { SessionUser } from '../../../models/security/SessionUser';
 
 // FIXME: все вьюхи можно заменить на 
 // create view t_view AS
@@ -22,7 +22,7 @@ import { SessionUser } from './SessionUser';
 export class UserService extends BaseService {
 
   public async getById (userId: number) {
-    const dbResult = await postgresWrapper.oneOrNoneWhere('v_api_app_user', 'app_user_id=$1', [userId]);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user', 'app_user_id=$1', [userId]);
     return plainToClass(AppUser, dbResult)
   }
 
@@ -30,7 +30,7 @@ export class UserService extends BaseService {
     if (!login || login === undefined) {
       return null;
     }
-    const dbResult = await postgresWrapper.oneOrNoneWhere('v_api_app_user', 'LOWER(app_user_login)=$1', [login.trim().toLowerCase()]);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user', 'LOWER(app_user_login)=$1', [login.trim().toLowerCase()]);
     return plainToClass(AppUser, dbResult)
   }
 
@@ -38,13 +38,13 @@ export class UserService extends BaseService {
     if (!phone || phone === undefined) {
       return null;
     }
-    const dbResult = await postgresWrapper.oneOrNoneWhere('v_api_app_user', 'LOWER(app_user_phone)=$1', [phone.trim().toLowerCase()]);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user', 'LOWER(app_user_phone)=$1', [phone.trim().toLowerCase()]);
     return plainToClass(AppUser, dbResult)
   }
   appUser
 
   public async getByEmailCode (token: string | number) {
-    const dbResult = await postgresWrapper.oneOrNoneWhere('v_api_app_user', 'app_user_reg_token=$1', [token]);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user', 'app_user_reg_token=$1', [token]);
     return plainToClass(AppUser, dbResult)
   }
 
@@ -54,12 +54,12 @@ export class UserService extends BaseService {
   }
 
   public async getByResetPasswordToken (token: string) {
-    const dbResult = await postgresWrapper.oneOrNoneWhere('v_api_app_user', 'app_user_reset_pwd=$1', [token]);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user', 'app_user_reset_pwd=$1', [token]);
     return plainToClass(AppUser, dbResult)
   }
 
   public async getSessionUserByProfileCode (profileType: string, profileCode: number) {
-    const dbResult = await postgresWrapper.oneOrNoneWhere('v_api_app_user_social_net_profile', 'user_sn_profile_code=$1 and user_sn_profile_type=$2', [profileCode, profileType]);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user_social_net_profile', 'user_sn_profile_code=$1 and user_sn_profile_type=$2', [profileCode, profileType]);
     if (!dbResult) {
       return null;
     }
@@ -83,7 +83,7 @@ export class UserService extends BaseService {
 
   public async linkSessionUserToSocialNetwork (authStrategyType: string, sessionUser: SessionUser) {
     if (sessionUser.appUserId > 0 && sessionUser.userSnProfileId > 0 && authStrategyType) {
-      const dbResult = await postgresWrapper.oneOrNoneWhere('v_api_app_user_social_net_profile', 'user_sn_profile_code=$1 and user_sn_profile_type=$2', [sessionUser.userSnProfileId, authStrategyType]);
+      const dbResult = await postgresWrapper.oneOrNoneWhere('app_user_social_net_profile', 'user_sn_profile_code=$1 and user_sn_profile_type=$2', [sessionUser.userSnProfileId, authStrategyType]);
       const tryProfile = plainToClass(AppUserSocialNetProfile, dbResult)
 
       const newAppUserSocialNetProfile: AppUserSocialNetProfile = tryProfile ? tryProfile : new AppUserSocialNetProfile();
@@ -113,7 +113,7 @@ export class UserService extends BaseService {
   public convertAppUserToSessionUser (appUser: AppUser) {
     const result = new SessionUser();
     result.appUserId = appUser.appUserId;
-    result.appUserLogin = appUser.appUserLogin;
+    result.appUserName = !!appUser.appUserLogin ? appUser.appUserLogin : appUser.appUserPhone;
     result.appUserRegVerifiedInd = appUser.appUserRegVerifiedInd;
     result.appUserRegDate = appUser.appUserRegDate;
     return result;
@@ -128,7 +128,7 @@ export class UserService extends BaseService {
     result.userSnProfileNick = appUserSocialNetProfile.userSnProfileNick
     result.userSnProfileType = appUserSocialNetProfile.userSnProfileType;
     result.userSnProfileLink = appUserSocialNetProfile.userSnProfileLink;
-    result.appUserLogin = appUserSocialNetProfile.appUserEmail;
+    result.appUserName = appUserSocialNetProfile.appUserEmail;
 
     return result;
   }
@@ -143,7 +143,7 @@ export class UserService extends BaseService {
       result.userSnProfileAvatar = profile.photos && profile.photos.length && profile.photos.length > 0 ? profile.photos[0].value : '';
       result.userSnProfileEmail = profile.email ? profile.email : (profile.emails && profile.emails.length > 0 ? profile.emails[0].value : null);
       result.userSnProfileNick = profile.displayName;
-      result.appUserLogin = (result.userSnProfileEmail && result.userSnProfileEmail !== undefined && result.userSnProfileEmail !== 'undefined') ? result.userSnProfileEmail : '';
+      result.appUserName = (result.userSnProfileEmail && result.userSnProfileEmail !== undefined && result.userSnProfileEmail !== 'undefined') ? result.userSnProfileEmail : '';
     }
     return result;
   }

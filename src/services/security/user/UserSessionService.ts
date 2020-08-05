@@ -9,13 +9,13 @@ import { plainToClass } from 'class-transformer';
 export class UserSessionService extends BaseService {
 
   public async getByToken (token: string) {
-    const dbResult = await postgresWrapper.oneOrNoneWhere('v_api_app_user_session', 'user_session_token=$1', [token]);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user_session', 'user_session_token=$1', [token]);
     return plainToClass(AppUserSession, dbResult)
   }
 
 
   public async getByUser (appUserId: number) {
-    return postgresWrapper.anyWhere('v_api_app_user_session', null, 'app_user_id=$1', [appUserId]);
+    return postgresWrapper.anyWhere('app_user_session', null, 'app_user_id=$1', [appUserId]);
   }
 
   // FIXME: В настройки параметры

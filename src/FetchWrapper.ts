@@ -3,9 +3,18 @@ import fetch from 'node-fetch';
 import * as HttpProxyAgent from 'http-proxy-agent';
 import * as HttpsProxyAgent from 'https-proxy-agent';
 
-// TODO: Сделать отдельно ля json, body,text, blob? Или в результат прописывать  fetchResult?
-// TODO: Скачивание файла и запись в путь 
+// TODO: Сделать отдельно ля json, body,text, blob, formData? Или в результат прописывать  fetchResult?
+// TODO: Скачивание файла и запись в файл 
 // TODO: Patch отдельно сденлать
+
+// Интросептеры как ниже или свой пул use (req,resp).use... использовать
+// fetch = (originalFetch => {
+//   return (...arguments) => {
+//     const result = originalFetch.apply(this, arguments)
+//     return result.then(console.log("Request was sent"))
+//   }
+// })(fetch)
+
 class FetchWrapper {
 
   public async get (url: string, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {

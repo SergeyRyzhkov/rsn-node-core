@@ -1,4 +1,4 @@
-import { SessionUser } from '../user/SessionUser';
+import { SessionUser } from '../../../models/security/SessionUser';
 
 export enum RegistrationStatus {
   OK,

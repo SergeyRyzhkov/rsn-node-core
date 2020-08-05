@@ -1,5 +1,5 @@
 import { Exception } from '@/exceptions/Exception';
-import { SessionUser } from '../user/SessionUser';
+import { SessionUser } from '../../../models/security/SessionUser';
 // import { Exception } from '../../exceptions/Exception';
 
 export enum LogonStatus {

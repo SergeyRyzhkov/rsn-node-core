@@ -5,13 +5,13 @@ import { useExpressServer } from 'routing-controllers';
 import noCache from 'nocache';
 import { AppConfig } from './utils/Config';
 import { TypeOrmManager } from './TypeOrmManager';
-import { headerMiddleware } from './middlewares/HeaderMiddleware';
-import { errorMiddleware } from './middlewares/ErrorMiddleware';
+import { headerMiddleware } from './middleware/HeaderMiddleware';
+import { errorMiddleware } from './middleware/ErrorMiddleware';
 import { logger } from './utils/Logger';
 import { BaseController } from './controllers/BaseController';
 import helmet from 'helmet';
 import session from 'express-session';
-import { verifyAndUpdateAccessToken } from './middlewares/AuthorizeMiddleware';
+import { verifyAndUpdateAccessToken } from './middleware/AuthorizeMiddleware';
 import cookieParser from 'cookie-parser';
 import { serviceRegistry } from './ServiceRegistry';
 import { PassportProviders } from './services/security/PassportProviders';
@@ -54,10 +54,6 @@ export class ExpressApplication {
         }
       });
 
-      process.on('SIGINT', () => {
-        logger.info('Server SIGINT');
-      });
-
       process.on('warning', e => logger.error(e.stack));
 
       return this.app;
@@ -74,10 +70,14 @@ export class ExpressApplication {
       await TypeOrmManager.initConnection(this.ormEntityModelMetadata);
     }
 
+    const limit = AppConfig.serverConfig.bodyParserLimit || '50mb'
+
     this.app.set('trust proxy', 1);
     this.app.use(helmet());
     this.app.use(noCache());
     this.app.use(cookieParser())
+    this.app.use(bodyParser.urlencoded({ limit, extended: true }));
+    this.app.use(bodyParser.json({ limit }));
 
 
     // FIXME: Параметры в конфиг
@@ -88,17 +88,6 @@ export class ExpressApplication {
           origin: true
         }
       ));
-    }
-
-    const limit = AppConfig.serverConfig.bodyParserLimit || '50mb'
-    this.app.use(bodyParser.urlencoded({ limit, extended: true }));
-    this.app.use(bodyParser.json({ limit }));
-
-    if (!!AppConfig.authConfig) {
-      serviceRegistry.getService(PassportProviders).initialize();
-      this.app.use(passport.initialize());
-
-      this.app.use(verifyAndUpdateAccessToken());
     }
 
     // Для работы с сессией
@@ -112,14 +101,19 @@ export class ExpressApplication {
         sameSite: true
       }
     }
-
     if (this.app.get('env') !== 'production') {
       sessionOptions.cookie.secure = false;
     }
-
     this.app.use(session(sessionOptions));
 
     this.app.use(headerMiddleware());
+
+    if (!!AppConfig.authConfig) {
+      serviceRegistry.getService(PassportProviders).initialize();
+      this.app.use(passport.initialize());
+
+      this.app.use(verifyAndUpdateAccessToken());
+    }
 
     useExpressServer(this.app, {
       routePrefix: AppConfig.serverConfig.restApiEndPoint,

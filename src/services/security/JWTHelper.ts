@@ -2,7 +2,7 @@
 import jwt, { } from 'jsonwebtoken';
 import { AppConfig } from '@/utils/Config';
 import { plainToClass } from 'class-transformer';
-import { SessionUser } from './user/SessionUser';
+import { SessionUser } from '../../models/security/SessionUser';
 
 export class JWTHelper {
 

@@ -10,10 +10,20 @@ import { PassportProviders } from '@/services/security/PassportProviders';
 import { BadRequest } from '@/exceptions/clientErrors/BadRequest';
 import { serviceRegistry } from '@/ServiceRegistry';
 import { AuthService } from '@/services/security/auth/AuthService';
-import { authorized } from '@/middlewares/AuthorizeMiddleware';
+import { authorized } from '@/middleware/AuthorizeMiddleware';
+import { SecurityControllerHelper } from './SecurityControllerHelper';
 
 @JsonController('/auth')
 export class AuthController extends BaseController {
+
+  @Get('/user')
+  public async getCurrentSessionUser (
+    @Req() request: Request,
+    @Res() response: Response, ) {
+
+    const user = SecurityControllerHelper.getSessionUser(request);
+    return this.createSuccessResponse(user, response);
+  }
 
   @Post('/login')
   public async authenticateLocal (
@@ -27,27 +37,27 @@ export class AuthController extends BaseController {
       const logonResult = await serviceRegistry.getService(AuthService).loginByPassword(login, password, request.body.unlinkedSocialUser);
 
       // Устанавливаем в сесии анонима и чистим куку с токеном
-      BaseController.setSessionUserAnonymous(request, response);
+      SecurityControllerHelper.setSessionUserAnonymous(request, response);
 
       // Выставляем в сессию юзверя сессионого и высталяем куку с токеном
       if (logonResult.logonStatus === LogonStatus.OK) {
-        BaseController.setSessiontUser(logonResult.sessionUser, request);
-        BaseController.setJWTCookie(response, logonResult.newAccessToken);
+        SecurityControllerHelper.setSessiontUser(logonResult.sessionUser, request);
+        SecurityControllerHelper.setJWTCookie(response, logonResult.newAccessToken);
       }
 
       // Если требуется подтверждение по SMS, то сбрасываем юзверя, будем ждать подтверждения
       if (logonResult.logonStatus === LogonStatus.RequereConfirmBySmsCode) {
-        BaseController.setSessiontUser(logonResult.sessionUser, request);
+        SecurityControllerHelper.setSessiontUser(logonResult.sessionUser, request);
         delete logonResult.sessionUser;
       }
 
       delete logonResult.newAccessToken;
 
-      BaseController.createSuccessResponse(logonResult, response);
+      return this.createSuccessResponse(logonResult, response);
     } catch (err) {
       const result = new AuthResult();
       result.makeFailedResult();
-      return BaseController.createSuccessResponse(result, response);
+      return this.createSuccessResponse(result, response);
     }
   }
 
@@ -60,24 +70,37 @@ export class AuthController extends BaseController {
     @Res() response: Response) {
 
     try {
-      const sessionUser = BaseController.getSessionUser(request);
+      const sessionUser = SecurityControllerHelper.getSessionUser(request);
       const result = await serviceRegistry.getService(AuthService).confirmLoginByCode(code, sessionUser.appUserId);
 
       if (result.logonStatus === LogonStatus.OK) {
-        BaseController.setSessiontUser(result.sessionUser, request);
-        BaseController.setJWTCookie(response, result.newAccessToken);
+        SecurityControllerHelper.setSessiontUser(result.sessionUser, request);
+        SecurityControllerHelper.setJWTCookie(response, result.newAccessToken);
       }
 
       delete result.newAccessToken;
-      return BaseController.createSuccessResponse(result, response);
+      return this.createSuccessResponse(result, response);
 
     } catch (err) {
       const result = new AuthResult();
       result.makeFailedResult();
-      return BaseController.createSuccessResponse(result, response);
+      return this.createSuccessResponse(result, response);
     }
   }
 
+  @Get('/logout')
+  public async logout (
+    @Req() request: Request,
+    @Res() response: Response) {
+
+    try {
+      SecurityControllerHelper.setSessionUserAnonymous(request, response);
+      serviceRegistry.getService(AuthService).logout(SecurityControllerHelper.getAccessToken(request));
+      return this.createSuccessResponse({}, response);
+    } catch (err) {
+      return this.createFailureResponse(err, response);
+    }
+  }
 
   @Get('/:authType')
   public async startSocialNetAuthentication (
@@ -89,7 +112,7 @@ export class AuthController extends BaseController {
       const logonResult = new AuthResult();
       //  BaseController.addJWTCookie(response, logonResult, null);
       logonResult.makeErrorResult(new BadRequest('Invalid passport provider'));
-      return BaseController.createRedirectResponse(response, `/auth/callback/login`)
+      return this.createRedirectResponse(response, `/auth/callback/login`)
     }
 
     let scope = {};
@@ -121,7 +144,7 @@ export class AuthController extends BaseController {
           let newAccessToken = null;
 
           // Устанавливаем в сесии анонима и чистим куку с токеном
-          BaseController.setSessionUserAnonymous(request, response);
+          SecurityControllerHelper.setSessionUserAnonymous(request, response);
 
           if (!logonResult) {
             logonResult = new AuthResult();
@@ -130,13 +153,13 @@ export class AuthController extends BaseController {
 
           // Выставляем в сессию юзверя сессионого и высталяем куку с токеном
           if (logonResult.logonStatus === LogonStatus.OK) {
-            BaseController.setSessiontUser(logonResult.sessionUser, request);
-            BaseController.setJWTCookie(response, logonResult.newAccessToken);
+            SecurityControllerHelper.setSessiontUser(logonResult.sessionUser, request);
+            SecurityControllerHelper.setJWTCookie(response, logonResult.newAccessToken);
           }
 
           // Если требуется подтверждение по SMS, то сбрасываем юзверя, будем ждать подтверждения
           if (logonResult.logonStatus === LogonStatus.RequereConfirmBySmsCode) {
-            BaseController.setSessiontUser(logonResult.sessionUser, request);
+            SecurityControllerHelper.setSessiontUser(logonResult.sessionUser, request);
             delete logonResult.sessionUser;
           }
 
@@ -147,11 +170,11 @@ export class AuthController extends BaseController {
           delete logonResult.newAccessToken;
 
           if (authStrategyType === PassportProviders.LOCAL) {
-            resolve(BaseController.createSuccessResponse(logonResult, response));
+            resolve(this.createSuccessResponse(logonResult, response));
           } else {
             // BaseController.addJWTCookie(response, logonResult, newAccessToken);
-            BaseController.setJWTCookie(response, newAccessToken);
-            resolve(BaseController.createRedirectResponse(response, `/auth/callback/login`));
+            SecurityControllerHelper.setJWTCookie(response, newAccessToken);
+            resolve(this.createRedirectResponse(response, `/auth/callback/login`));
           }
 
         })(request, response, null);

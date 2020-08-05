@@ -8,7 +8,7 @@ import { PassportProviders } from '../PassportProviders';
 import { UserSessionService } from '../user/UserSessionService';
 import { UserService } from '../user/UserService';
 import { JWTHelper } from '../JWTHelper';
-import { SessionUser } from '../user/SessionUser';
+import { SessionUser } from '../../../models/security/SessionUser';
 import { InvalidTokenException } from '@/exceptions/authErrors/InvalidTokenException';
 import { TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
 import { AppUserSession } from '@/models/security/AppUserSession';
@@ -120,7 +120,7 @@ export class AuthService extends BaseService {
         // Ищем пользователя по идентификатору профиля
         sessionUser = await serviceRegistry.getService(UserService).getSessionUserByProfileCode(authStrategyType, profile.id);
         if (sessionUser && sessionUser.appUserId !== 0) {
-          appUser = await serviceRegistry.getService(UserService).getByLogin(sessionUser.appUserLogin);
+          appUser = await serviceRegistry.getService(UserService).getByLogin(sessionUser.appUserName);
         }
       }
 
@@ -269,7 +269,7 @@ export class AuthService extends BaseService {
 
   // Отправка смс - для подтверждения входа
   private async sendSmsConfirmRegistrationMessage (user: AppUser) {
-    user.appUserSmsCode = 55555;
+    user.appUserSmsCode = 77777;
     return await serviceRegistry.getService(UserService).save(user);
   }
 }

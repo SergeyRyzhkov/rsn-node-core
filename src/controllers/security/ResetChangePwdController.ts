@@ -4,6 +4,7 @@ import { BaseController } from '../BaseController';
 import { serviceRegistry } from '@/ServiceRegistry';
 import { ClientNotifyMessage } from '../ClientNotifyMessage';
 import { ResetChangePwdService } from '@/services/security/reset/ResetChangePwdService';
+import { SecurityControllerHelper } from './SecurityControllerHelper';
 
 @JsonController('/user')
 export class ResetChangePwdController extends BaseController {
@@ -15,14 +16,14 @@ export class ResetChangePwdController extends BaseController {
         @Res() response: Response) {
 
         try {
-            BaseController.setSessionUserAnonymous(request, response);
+            SecurityControllerHelper.setSessionUserAnonymous(request, response);
             const appUser = await serviceRegistry.getService(ResetChangePwdService).sendResetPasswordMessage(login);
             const alertText = !appUser
                 ? 'Ошибка!'
                 : `На адрес ${login} отправлено письмо с инструкциями для восстановления пароля`;
-            return BaseController.createSuccessResponseWithMessage({}, response, 200, ClientNotifyMessage.createAlert('Восстановление пароля', alertText), '/');
+            return this.createSuccessResponseWithMessage({}, response, 200, ClientNotifyMessage.createAlert('Восстановление пароля', alertText), '/');
         } catch (err) {
-            return BaseController.createFailureResponse(err, response);
+            return this.createFailureResponse(err, response);
         }
     }
 

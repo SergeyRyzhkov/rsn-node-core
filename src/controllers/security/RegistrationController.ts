@@ -4,7 +4,8 @@ import { BaseController } from '../BaseController';
 import { serviceRegistry } from '@/ServiceRegistry';
 import { RegistrationStatus, RegistrationResult } from '@/services/security/registration/RegistrationResult';
 import { RegistrationService } from '@/services/security/registration/RegistrationService';
-import { authorized } from '@/middlewares/AuthorizeMiddleware';
+import { authorized } from '@/middleware/AuthorizeMiddleware';
+import { SecurityControllerHelper } from './SecurityControllerHelper';
 
 @JsonController('/user')
 export class RegistrationController extends BaseController {
@@ -19,27 +20,27 @@ export class RegistrationController extends BaseController {
         try {
 
             // Устанавливаем в сесии анонима и чистим куку с токеном
-            BaseController.setSessionUserAnonymous(request, response);
+            SecurityControllerHelper.setSessionUserAnonymous(request, response);
 
             const registrationResult = await serviceRegistry.getService(RegistrationService).registerUser(login, password, request.body.unlinkedSocialUser);
 
             if (registrationResult.registrationStatus === RegistrationStatus.OK) {
-                BaseController.setSessiontUser(registrationResult.sessionUser, request);
-                BaseController.setJWTCookie(response, registrationResult.newAccessToken);
+                SecurityControllerHelper.setSessiontUser(registrationResult.sessionUser, request);
+                SecurityControllerHelper.setJWTCookie(response, registrationResult.newAccessToken);
             }
 
             if (registrationResult.registrationStatus === RegistrationStatus.RequereConfirmBySmsCode) {
-                BaseController.setSessiontUser(registrationResult.sessionUser, request);
+                SecurityControllerHelper.setSessiontUser(registrationResult.sessionUser, request);
                 delete registrationResult.sessionUser;
             }
 
             delete registrationResult.newAccessToken;
-            return BaseController.createSuccessResponse(registrationResult, response);
+            return this.createSuccessResponse(registrationResult, response);
 
         } catch (err) {
             const result = new RegistrationResult();
             result.makeInvalid();
-            return BaseController.createSuccessResponse(result, response);
+            return this.createSuccessResponse(result, response);
         }
     }
 
@@ -49,22 +50,22 @@ export class RegistrationController extends BaseController {
         @Req() request: Request,
         @Res() response: Response) {
 
-        BaseController.setSessionUserAnonymous(request, response);
+        SecurityControllerHelper.setSessionUserAnonymous(request, response);
         try {
             const result = await serviceRegistry.getService(RegistrationService).confirmRegistrationByEmail(token);
 
             if (result.registrationStatus === RegistrationStatus.OK) {
-                BaseController.setSessiontUser(result.sessionUser, request);
-                BaseController.setJWTCookie(response, result.newAccessToken);
+                SecurityControllerHelper.setSessiontUser(result.sessionUser, request);
+                SecurityControllerHelper.setJWTCookie(response, result.newAccessToken);
             }
 
             delete result.newAccessToken;
-            return BaseController.createSuccessResponse(result, response);
+            return this.createSuccessResponse(result, response);
 
         } catch (err) {
             const result = new RegistrationResult();
             result.makeInvalid();
-            return BaseController.createSuccessResponse(result, response);
+            return this.createSuccessResponse(result, response);
         }
     }
 
@@ -76,21 +77,21 @@ export class RegistrationController extends BaseController {
         @Res() response: Response) {
 
         try {
-            const sessionUser = BaseController.getSessionUser(request);
+            const sessionUser = SecurityControllerHelper.getSessionUser(request);
             const result = await serviceRegistry.getService(RegistrationService).confirmRegistrationByCode(code, sessionUser.appUserId);
 
             if (result.registrationStatus === RegistrationStatus.OK) {
-                BaseController.setSessiontUser(result.sessionUser, request);
-                BaseController.setJWTCookie(response, result.newAccessToken);
+                SecurityControllerHelper.setSessiontUser(result.sessionUser, request);
+                SecurityControllerHelper.setJWTCookie(response, result.newAccessToken);
             }
 
             delete result.newAccessToken;
-            return BaseController.createSuccessResponse(result, response);
+            return this.createSuccessResponse(result, response);
 
         } catch (err) {
             const result = new RegistrationResult();
             result.makeInvalid();
-            return BaseController.createSuccessResponse(result, response);
+            return this.createSuccessResponse(result, response);
         }
     }
 }

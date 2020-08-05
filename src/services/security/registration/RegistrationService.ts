@@ -10,7 +10,7 @@ import { RegistrationOptions } from './RegistrationOptions';
 import { MailSender } from '@/services/mail/MailSender';
 import { AppConfig } from '@/utils/Config';
 import { Guid } from '@/utils/Guid';
-import { SessionUser } from '../user/SessionUser';
+import { SessionUser } from '../../../models/security/SessionUser';
 import { TwoFactorVerifier } from '../TwoFactorVerifier';
 
 export class RegistrationService extends BaseService {

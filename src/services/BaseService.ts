@@ -1,5 +1,3 @@
-import { postgresWrapper } from '@/PostgresWrapper';
-import { SortPagination } from '@/models/SortPagination';
 
 export class BaseService {
 
