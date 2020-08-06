@@ -4,7 +4,7 @@ import { BaseController } from '../BaseController';
 import { serviceRegistry } from '@/ServiceRegistry';
 import { RegistrationStatus, RegistrationResult } from '@/services/security/registration/RegistrationResult';
 import { RegistrationService } from '@/services/security/registration/RegistrationService';
-import { authorized } from '@/middleware/AuthorizeMiddleware';
+import { authorized, temporaryAuthorized } from '@/middleware/SecurityMiddlewares';
 import { SecurityControllerHelper } from './SecurityControllerHelper';
 
 @JsonController('/user')
@@ -44,6 +44,7 @@ export class RegistrationController extends BaseController {
         }
     }
 
+    @UseBefore(temporaryAuthorized())
     @Get('/registration/confirm/mail/:token')
     public async confirmRegistrationByEmail (
         @Param('token') token: string,
@@ -69,7 +70,7 @@ export class RegistrationController extends BaseController {
         }
     }
 
-    @UseBefore(authorized())
+    @UseBefore(temporaryAuthorized())
     @Get('/registration/confirm/code/:code')
     public async confirmRegistrationByCode (
         @Param('code') code: number,

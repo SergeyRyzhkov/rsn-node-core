@@ -1,11 +1,11 @@
-import { SecurityException } from './SecurityException';
+import { Exception } from '../Exception';
 
 
-export class InvalidTokenException extends SecurityException {
+export class InvalidTokenException extends Exception {
 
   public name = 'INVALID_TOKEN';
 
-  constructor({ message, innerException }: { message: string; innerException?: any; }) {
-    super(message, innerException);
+  constructor(message?: string) {
+    super(message);
   }
 }

@@ -37,7 +37,7 @@ export class AuthService extends BaseService {
 
     try {
 
-      const user = this.options.isLoginByPhone ? await serviceRegistry.getService(AppUserService).getByPhone(login) : await serviceRegistry.getService(AppUserService).getByLogin(login);
+      const user = await serviceRegistry.getService(AppUserService).getByLogin(login);
 
       // Нет такого пользователя (с логином)
       if (!user) {
@@ -180,6 +180,7 @@ export class AuthService extends BaseService {
 
     try {
       if (!!verifiedUser) {
+        // FIXME: Переименовать это роле - appUserRegVerifiedInd Это проверка кода не только для регистрации
         verifiedUser.appUserRegVerifiedInd = 1;
         verifiedUser.appUserRegToken = null;
         verifiedUser.appUserSmsCode = null;
@@ -202,7 +203,7 @@ export class AuthService extends BaseService {
   // Логиним пользоваиеля после логина, регистрации, или подтверждения через почту (смс), или смене пароля
   public async autoLoginUser (sessionUser: SessionUser) {
     const newSession = await serviceRegistry.getService(AppUserSessionService).createSession(sessionUser.appUserId);
-    const newAccessToken = JWTHelper.generateAccessToken(sessionUser, newSession.userSessionToken);
+    const newAccessToken = JWTHelper.createAndSignJwt(sessionUser, newSession.userSessionToken);
     return newAccessToken;
   }
 
@@ -217,19 +218,19 @@ export class AuthService extends BaseService {
   // Используется в мидлваре при каждом запросе для проверки и обновления токена
   public async verifyAndUpdateAccessToken (accessToken: string) {
     if (!accessToken) {
-      throw new InvalidTokenException({ message: 'Invalid access token' });
+      throw new InvalidTokenException('Invalid access token');
     }
     try {
       // Токен валидный и не истекло время жизни, просто обновляем время жизни (и создается новый JWT)
       JWTHelper.verifyAccessToken(accessToken);
-      return JWTHelper.refreshAccessToken(accessToken);
+      return JWTHelper.extendAccessToken(accessToken);
     } catch (error) {
 
       // Истекло время жизни Access токена
       if (error instanceof TokenExpiredError) {
         const tokenUser = JWTHelper.getTokenUser(accessToken);
         if (!tokenUser) {
-          throw new InvalidTokenException({ message: 'Invalid access token payload' });
+          throw new InvalidTokenException('Invalid access token payload');
         }
 
         const sessionToken = JWTHelper.getJwtId(accessToken);
@@ -254,18 +255,28 @@ export class AuthService extends BaseService {
 
         // Все хорошо - увеличиваем дату окончания сессии
         serviceRegistry.getService(AppUserSessionService).refreshSession(session);
-        return JWTHelper.generateAccessToken(tokenUser, session.userSessionToken);
+        return JWTHelper.createAndSignJwt(tokenUser, session.userSessionToken);
       }
 
       // Ошибка в токене в принципе (невалидна подпись и т.д.)
       if (error instanceof JsonWebTokenError) {
-        throw new InvalidTokenException({ message: 'Invalid access token' });
+        throw new InvalidTokenException('Invalid access token');
       }
 
       // Ошибка необработанная
       throw new InternalServerError('Authorization error');
     }
   }
+
+  public isUserAuthorized (sessionUser: SessionUser) {
+    return !!sessionUser && sessionUser.appUserId > 0 && sessionUser.appUserRegVerifiedInd === 1;
+  }
+
+  // Юзверь залогинился, но еще не подтвердил регистрацию кодом или логин кодом
+  public isUserTemporaryAuthorized (sessionUser: SessionUser) {
+    return !!sessionUser && sessionUser.appUserId > 0;
+  }
+
 
   // Отправка смс - для подтверждения входа
   private async sendSmsConfirmRegistrationMessage (user: AppUser) {

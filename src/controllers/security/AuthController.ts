@@ -10,7 +10,7 @@ import { PassportProviders } from '@/services/security/PassportProviders';
 import { BadRequest } from '@/exceptions/clientErrors/BadRequest';
 import { serviceRegistry } from '@/ServiceRegistry';
 import { AuthService } from '@/services/security/auth/AuthService';
-import { authorized } from '@/middleware/AuthorizeMiddleware';
+import { authorized, temporaryAuthorized } from '@/middleware/SecurityMiddlewares';
 import { SecurityControllerHelper } from './SecurityControllerHelper';
 
 @JsonController('/auth')
@@ -62,7 +62,7 @@ export class AuthController extends BaseController {
   }
 
 
-  @UseBefore(authorized())
+  @UseBefore(temporaryAuthorized())
   @Get('/confirm/code/:code')
   public async confirmLoginByCode (
     @Param('code') code: number,
@@ -102,82 +102,82 @@ export class AuthController extends BaseController {
     }
   }
 
-  @Get('/:authType')
-  public async startSocialNetAuthentication (
-    @Param('authType') authStrategyType: string,
-    @Req() request: Request,
-    @Res() response: Response) {
+  // @Get('/:authType')
+  // public async startSocialNetAuthentication (
+  //   @Param('authType') authStrategyType: string,
+  //   @Req() request: Request,
+  //   @Res() response: Response) {
 
-    if (!PassportProviders.getProviderNameByAuthType(authStrategyType)) {
-      const logonResult = new AuthResult();
-      //  BaseController.addJWTCookie(response, logonResult, null);
-      logonResult.makeErrorResult(new BadRequest('Invalid passport provider'));
-      return this.createRedirectResponse(response, `/auth/callback/login`)
-    }
+  //   if (!PassportProviders.getProviderNameByAuthType(authStrategyType)) {
+  //     const logonResult = new AuthResult();
+  //     //  BaseController.addJWTCookie(response, logonResult, null);
+  //     logonResult.makeErrorResult(new BadRequest('Invalid passport provider'));
+  //     return this.createRedirectResponse(response, `/auth/callback/login`)
+  //   }
 
-    let scope = {};
-    if (authStrategyType === 'google') {
-      scope = { scope: ['email profile'] };
-    }
-    return new Promise((resolve) => {
-      passport.authenticate(authStrategyType, scope,
-        () => {
-          resolve({})
-        })(request, response);
-    });
-  }
+  //   let scope = {};
+  //   if (authStrategyType === 'google') {
+  //     scope = { scope: ['email profile'] };
+  //   }
+  //   return new Promise((resolve) => {
+  //     passport.authenticate(authStrategyType, scope,
+  //       () => {
+  //         resolve({})
+  //       })(request, response);
+  //   });
+  // }
 
-  @Get('/:authType/callback')
-  public async authenticateSocialNetwork (
-    @Param('authType') authStrategyType: string,
-    @Req() request: Request,
-    @Res() response: Response) {
+  // @Get('/:authType/callback')
+  // public async authenticateSocialNetwork (
+  //   @Param('authType') authStrategyType: string,
+  //   @Req() request: Request,
+  //   @Res() response: Response) {
 
-    return this.authenticateResponsePromise(authStrategyType, request, response);
-  }
+  //   return this.authenticateResponsePromise(authStrategyType, request, response);
+  // }
 
-  private authenticateResponsePromise (authStrategyType: string, request: Request, response: Response) {
-    return new Promise((resolve) => {
-      passport.authenticate(authStrategyType,
-        async (logonResult: AuthResult) => {
+  // private authenticateResponsePromise (authStrategyType: string, request: Request, response: Response) {
+  //   return new Promise((resolve) => {
+  //     passport.authenticate(authStrategyType,
+  //       async (logonResult: AuthResult) => {
 
-          let newAccessToken = null;
+  //         let newAccessToken = null;
 
-          // Устанавливаем в сесии анонима и чистим куку с токеном
-          SecurityControllerHelper.setSessionUserAnonymous(request, response);
+  //         // Устанавливаем в сесии анонима и чистим куку с токеном
+  //         SecurityControllerHelper.setSessionUserAnonymous(request, response);
 
-          if (!logonResult) {
-            logonResult = new AuthResult();
-            logonResult.makeErrorResult(new Unauthorized(`${request.ip} unauthorized`));
-          }
+  //         if (!logonResult) {
+  //           logonResult = new AuthResult();
+  //           logonResult.makeErrorResult(new Unauthorized(`${request.ip} unauthorized`));
+  //         }
 
-          // Выставляем в сессию юзверя сессионого и высталяем куку с токеном
-          if (logonResult.logonStatus === LogonStatus.OK) {
-            SecurityControllerHelper.setSessiontUser(logonResult.sessionUser, request);
-            SecurityControllerHelper.setJWTCookie(response, logonResult.newAccessToken);
-          }
+  //         // Выставляем в сессию юзверя сессионого и высталяем куку с токеном
+  //         if (logonResult.logonStatus === LogonStatus.OK) {
+  //           SecurityControllerHelper.setSessiontUser(logonResult.sessionUser, request);
+  //           SecurityControllerHelper.setJWTCookie(response, logonResult.newAccessToken);
+  //         }
 
-          // Если требуется подтверждение по SMS, то сбрасываем юзверя, будем ждать подтверждения
-          if (logonResult.logonStatus === LogonStatus.RequereConfirmBySmsCode) {
-            SecurityControllerHelper.setSessiontUser(logonResult.sessionUser, request);
-            delete logonResult.sessionUser;
-          }
+  //         // Если требуется подтверждение по SMS, то сбрасываем юзверя, будем ждать подтверждения
+  //         if (logonResult.logonStatus === LogonStatus.RequereConfirmBySmsCode) {
+  //           SecurityControllerHelper.setSessiontUser(logonResult.sessionUser, request);
+  //           delete logonResult.sessionUser;
+  //         }
 
-          if (logonResult.logonStatus === LogonStatus.UserNotFoundButSocialNetworkAuthOK) {
-            newAccessToken = JWTHelper.generateAccessToken(logonResult.sessionUser, Guid.newGuid());
-          }
+  //         if (logonResult.logonStatus === LogonStatus.UserNotFoundButSocialNetworkAuthOK) {
+  //           newAccessToken = JWTHelper.createAndSignJwt(logonResult.sessionUser, Guid.newGuid());
+  //         }
 
-          delete logonResult.newAccessToken;
+  //         delete logonResult.newAccessToken;
 
-          if (authStrategyType === PassportProviders.LOCAL) {
-            resolve(this.createSuccessResponse(logonResult, response));
-          } else {
-            // BaseController.addJWTCookie(response, logonResult, newAccessToken);
-            SecurityControllerHelper.setJWTCookie(response, newAccessToken);
-            resolve(this.createRedirectResponse(response, `/auth/callback/login`));
-          }
+  //         if (authStrategyType === PassportProviders.LOCAL) {
+  //           resolve(this.createSuccessResponse(logonResult, response));
+  //         } else {
+  //           // BaseController.addJWTCookie(response, logonResult, newAccessToken);
+  //           SecurityControllerHelper.setJWTCookie(response, newAccessToken);
+  //           resolve(this.createRedirectResponse(response, `/auth/callback/login`));
+  //         }
 
-        })(request, response, null);
-    });
-  }
+  //       })(request, response, null);
+  //   });
+  // }
 }

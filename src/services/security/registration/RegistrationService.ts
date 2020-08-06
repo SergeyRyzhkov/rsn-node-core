@@ -43,7 +43,7 @@ export class RegistrationService extends BaseService {
 
         try {
             const userService = serviceRegistry.getService(AppUserService);
-            const user = this.options.isLoginByPhone ? await userService.getByPhone(login) : await userService.getByLogin(login);
+            const user = await userService.getByLogin(login);
 
             // Уже существует с таким логином
             if (!!user) {
@@ -52,11 +52,8 @@ export class RegistrationService extends BaseService {
 
             // Создаем и сохраняем в базе нового пользователя
             const newAppUser = new AppUser();
-            if (this.options.isLoginByPhone) {
-                newAppUser.appUserPhone = login;
-            } else {
-                newAppUser.appUserLogin = login;
-            }
+            newAppUser.appUserLogin = login;
+            newAppUser.appUserMail = !this.options.isLoginByPhone && !!newAppUser.appUserMail ? login : newAppUser.appUserMail
 
             newAppUser.appUserPwdHash = bcrypt.hashSync(password, this.options.bcryptSaltRounds);
             newAppUser.appUserRegDate = new Date(Date.now()).toUTCString();
@@ -127,7 +124,7 @@ export class RegistrationService extends BaseService {
 
         const message = {
             from: AppConfig.mail.from,
-            to: user.appUserLogin,
+            to: user.appUserMail,
             text: '',
             html: '',
             subject: this.options.сonfirmMailHeader

@@ -11,7 +11,7 @@ import { logger } from './utils/Logger';
 import { BaseController } from './controllers/BaseController';
 import helmet from 'helmet';
 import session from 'express-session';
-import { verifyAndUpdateAccessToken } from './middleware/AuthorizeMiddleware';
+import { verifyAndUpdateAccessToken } from './middleware/SecurityMiddlewares';
 import cookieParser from 'cookie-parser';
 import { serviceRegistry } from './ServiceRegistry';
 import { PassportProviders } from './services/security/PassportProviders';
@@ -95,8 +95,8 @@ export class ExpressApplication {
     // FIXME: В настройки все
     const sessionOptions = {
       secret: 'keyboard cat',
-      resave: false,
-      saveUninitialized: true,
+      resave: true,
+      saveUninitialized: false,
       cookie: {
         secure: true,
         sameSite: true

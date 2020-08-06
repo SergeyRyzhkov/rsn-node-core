@@ -17,4 +17,6 @@ export class SessionUser {
   public userSnProfileEmail = '';
 
   public reset = false;
+
+  public roleIdList: number;
 }

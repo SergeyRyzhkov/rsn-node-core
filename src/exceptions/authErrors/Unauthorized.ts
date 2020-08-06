@@ -5,7 +5,7 @@ export class Unauthorized extends Exception {
 
   public name = 'UNAUTHORIZED';
 
-  constructor(message: string) {
+  constructor(message?: string) {
     super(401, message);
   }
 }

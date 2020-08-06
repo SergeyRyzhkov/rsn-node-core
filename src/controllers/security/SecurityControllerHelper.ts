@@ -3,6 +3,8 @@
 import { Request, Response } from 'express';
 import { AppConfig } from '@/utils/Config';
 import { SessionUser } from '@/models/security/SessionUser';
+import { AuthService } from '@/services/security/auth/AuthService';
+import { serviceRegistry } from '@/ServiceRegistry';
 
 export class SecurityControllerHelper {
 
@@ -16,7 +18,7 @@ export class SecurityControllerHelper {
         // FIXME: В настройки
         const cookieOptions = {
             // expires: new Date(Date.now() + AppConfig.authConfig.cookieExpires),
-            maxAge: 300e3,
+            maxAge: 500e3,
             httpOnly: true,
             hostOnly: false,
             secure: false,
@@ -64,10 +66,17 @@ export class SecurityControllerHelper {
     }
 
     public static getSessionUser (req: Request): SessionUser {
-        return this.isUserAuthorized(req) ? req.session.sessionUser : SessionUser.anonymousUser;
+        return !!req.session && req.session.sessionUser ? req.session.sessionUser : SessionUser.anonymousUser;
     }
 
     public static isUserAuthorized (req: Request) {
-        return !!req && !!req.session && !!req && !!req.session.sessionUser && req.session.sessionUser.appUserId !== 0;
+        const sessionUser = !!req && !!req.session ? req.session.sessionUser : SessionUser.anonymousUser;
+        return serviceRegistry.getService(AuthService).isUserAuthorized(sessionUser);
+    }
+
+    // Юзверь залогинился, но еще не подтвердил регистрацию кодом или логин кодом
+    public static isUserTemporaryAuthorized (req: Request) {
+        const sessionUser = !!req && !!req.session ? req.session.sessionUser : SessionUser.anonymousUser;
+        return serviceRegistry.getService(AuthService).isUserTemporaryAuthorized(sessionUser);
     }
 }

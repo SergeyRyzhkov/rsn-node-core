@@ -19,10 +19,13 @@ import { SessionUser } from '../../../models/security/SessionUser';
 
 // SELECT * FROM t_func (1); 
 
+
+// FIXME: Решить с ролями как их хранить и получать
+
 export class AppUserService extends BaseService {
 
   public async getById (userId: number) {
-    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user', 'app_user_id=$1', [userId]);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user_api_v', 'app_user_id=$1', [userId]);
     return plainToClass(AppUser, dbResult)
   }
 
@@ -30,31 +33,22 @@ export class AppUserService extends BaseService {
     if (!login || login === undefined) {
       return null;
     }
-    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user', 'LOWER(app_user_login)=$1', [login.trim().toLowerCase()]);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user_api_v', 'LOWER(app_user_login)=$1', [login.trim().toLowerCase()]);
     return plainToClass(AppUser, dbResult)
   }
 
-  public async getByPhone (phone: string) {
-    if (!phone || phone === undefined) {
-      return null;
-    }
-    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user', 'LOWER(app_user_phone)=$1', [phone.trim().toLowerCase()]);
-    return plainToClass(AppUser, dbResult)
-  }
-  appUser
-
-  public async getByEmailCode (token: string | number) {
-    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user', 'app_user_reg_token=$1', [token]);
+  public async getByEmailConfirmationCode (token: string | number) {
+    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user_api_v', 'app_user_reg_token=$1', [token]);
     return plainToClass(AppUser, dbResult)
   }
 
-  public async getBySmsCode (code: number) {
-    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user', 'app_user_sms_code=$1', [code]);
+  public async getBySmsConfirmationCode (code: number) {
+    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user_api_v', 'app_user_sms_code=$1', [code]);
     return plainToClass(AppUser, dbResult)
   }
 
   public async getByResetPasswordToken (token: string) {
-    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user', 'app_user_reset_pwd=$1', [token]);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user_api_v', 'app_user_reset_pwd=$1', [token]);
     return plainToClass(AppUser, dbResult)
   }
 
@@ -113,9 +107,10 @@ export class AppUserService extends BaseService {
   public convertAppUserToSessionUser (appUser: AppUser) {
     const result = new SessionUser();
     result.appUserId = appUser.appUserId;
-    result.appUserName = !!appUser.appUserLogin ? appUser.appUserLogin : appUser.appUserPhone;
+    result.appUserName = !!appUser.appUserMail ? appUser.appUserMail : appUser.appUserPhone;
     result.appUserRegVerifiedInd = appUser.appUserRegVerifiedInd;
     result.appUserRegDate = appUser.appUserRegDate;
+    result.roleIdList = appUser.roleIdList;
     return result;
   }
 

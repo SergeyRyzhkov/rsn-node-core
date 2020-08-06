@@ -6,14 +6,14 @@ import { SessionUser } from '../../models/security/SessionUser';
 
 export class JWTHelper {
 
-  public static generateAccessToken (sessionUser: SessionUser, sessionId: string): string {
+  public static createAndSignJwt (sessionUser: SessionUser, sessionId: string): string {
     const payload = { ...sessionUser };
     this.deleteClaimProperties(payload);
     const jwtOptions = { ...AppConfig.authConfig.JWT.access.options, jwtid: sessionId };
     return jwt.sign(payload, AppConfig.authConfig.JWT.access.secretKey, jwtOptions);
   }
 
-  public static refreshAccessToken (oldToken: string): string {
+  public static extendAccessToken (oldToken: string): string {
     const oldPayload = jwt.decode(oldToken, { complete: false, json: true }) as any;
     const sessionId = oldPayload.jti;
     this.deleteClaimProperties(oldPayload);

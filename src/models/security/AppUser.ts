@@ -79,5 +79,10 @@ export class AppUser {
   })
   public appUserPhone: string;
 
+  @Column({
+    name: 'app_user_mail'
+  })
+  public appUserMail: string;
 
+  public roleIdList: number;
 }

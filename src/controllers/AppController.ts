@@ -3,7 +3,7 @@ import { Response } from 'express';
 import { AppConfig } from '@/utils/Config';
 import { JsonController, Get, Res, getMetadataArgsStorage, UseBefore } from 'routing-controllers';
 import { routingControllersToSpec } from 'routing-controllers-openapi'
-import { authorized } from '@/middleware/AuthorizeMiddleware';
+import { authorized } from '@/middleware/SecurityMiddlewares';
 
 @JsonController('/app')
 export class AppController extends BaseController {

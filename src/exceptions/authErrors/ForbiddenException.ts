@@ -1,12 +1,10 @@
-import { SecurityException } from './SecurityException';
+import { Exception } from '../Exception';
 
-
-export class ForbiddenException extends SecurityException {
+export class ForbiddenException extends Exception {
 
   public name = 'FORBIDDEN_EXCEPTION';
 
-  constructor(message?: string, innerException?: any) {
-    super(message, innerException);
-    this.status = 403;
+  constructor(message?: string) {
+    super(403, message);
   }
 }

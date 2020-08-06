@@ -30,7 +30,7 @@ export class TwoFactorVerifier {
                 return !!verifiedUser && verifiedUser.appUserSmsCode === smsCodeOrToken && !this.isRegistrationCodeExpired(verifiedUser) ? verifiedUser : null;
             } else {
                 // Подтверждение через почту/ Проверяем токен
-                verifiedUser = await userService.getByEmailCode(smsCodeOrToken);
+                verifiedUser = await userService.getByEmailConfirmationCode(smsCodeOrToken);
                 return !!verifiedUser && this.isRegistrationCodeExpired(verifiedUser) ? verifiedUser : null;
             }
 

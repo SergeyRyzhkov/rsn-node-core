@@ -1,11 +1,10 @@
-import { SecurityException } from './SecurityException';
+import { Exception } from '../Exception';
 
-
-export class UserSessionExpiredException extends SecurityException {
+export class UserSessionExpiredException extends Exception {
 
   public name = 'SESSION_EXPIRED';
 
-  constructor (message: string, innerException?: any) {
-    super(message, innerException);
+  constructor(message?: string) {
+    super(message);
   }
 }
