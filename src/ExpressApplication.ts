@@ -17,6 +17,7 @@ import { serviceRegistry } from './ServiceRegistry';
 import { PassportProviders } from './services/security/PassportProviders';
 import passport from 'passport';
 
+// FIXME: Было бы удобно еще регистрировать массив сервисов
 
 export class ExpressApplication {
   private app = express();
@@ -109,8 +110,8 @@ export class ExpressApplication {
     this.app.use(headerMiddleware());
 
     if (!!AppConfig.authConfig) {
-      serviceRegistry.getService(PassportProviders).initialize();
-      this.app.use(passport.initialize());
+      //  serviceRegistry.getService(PassportProviders).initialize();
+      // this.app.use(passport.initialize());
 
       this.app.use(verifyAndUpdateAccessToken());
     }

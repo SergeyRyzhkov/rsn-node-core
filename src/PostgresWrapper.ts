@@ -125,7 +125,7 @@ class PostgresWrapper {
 
   public async getCountFrom (tableName: string, whereStmt?: string, whereParams?: any[]) {
     let count = 0;
-    const selectStmtp = `SELECT COUNT(1) FROM ${tableName}`;
+    const selectStmtp = `SELECT COUNT(*) FROM ${tableName}`;
     let whereAdd = '';
     if (whereStmt != null) {
       whereAdd = ` WHERE ${whereStmt} `;

@@ -1,7 +1,7 @@
 import { BaseService } from '../../BaseService';
 import { RegistrationResult } from '@/services/security/registration/RegistrationResult';
 import { serviceRegistry } from '@/ServiceRegistry';
-import { UserService } from '../user/UserService';
+import { AppUserService } from '../user/AppUserService';
 import { AppUser } from '@/models/security/AppUser';
 import { AuthService } from '../auth/AuthService';
 import { logger } from '@/utils/Logger';
@@ -42,7 +42,7 @@ export class RegistrationService extends BaseService {
         // }
 
         try {
-            const userService = serviceRegistry.getService(UserService);
+            const userService = serviceRegistry.getService(AppUserService);
             const user = this.options.isLoginByPhone ? await userService.getByPhone(login) : await userService.getByLogin(login);
 
             // Уже существует с таким логином
@@ -118,7 +118,7 @@ export class RegistrationService extends BaseService {
     // Отправка почты - для подтверждения регистрации
     public async sendMailConfirmRegistrationMessage (user: AppUser) {
         user.appUserRegToken = Guid.newGuid();
-        await serviceRegistry.getService(UserService).save(user);
+        await serviceRegistry.getService(AppUserService).save(user);
 
         const format = (template: string) => {
             const clientConfirmUrl = `${this.options.сonfirMailUrl}/${user.appUserRegToken}`;
@@ -138,7 +138,7 @@ export class RegistrationService extends BaseService {
     // Отправка смс - для подтверждения регистрации
     public async sendSmsConfirmRegistrationMessage (user: AppUser) {
         user.appUserSmsCode = 55555;
-        return await serviceRegistry.getService(UserService).save(user);
+        return await serviceRegistry.getService(AppUserService).save(user);
     }
 
     private async autoLogonUserAfter2FA (verifiedUser: AppUser) {
@@ -149,9 +149,9 @@ export class RegistrationService extends BaseService {
                 verifiedUser.appUserRegVerifiedInd = 1;
                 verifiedUser.appUserRegToken = null;
                 verifiedUser.appUserSmsCode = null;
-                await serviceRegistry.getService(UserService).save(verifiedUser);
+                await serviceRegistry.getService(AppUserService).save(verifiedUser);
 
-                const sessionUser = serviceRegistry.getService(UserService).convertAppUserToSessionUser(verifiedUser);
+                const sessionUser = serviceRegistry.getService(AppUserService).convertAppUserToSessionUser(verifiedUser);
                 registrationResult.newAccessToken = await serviceRegistry.getService(AuthService).autoLoginUser(sessionUser);
                 registrationResult.makeOK(sessionUser, this.options.registrationCompliteMessage);
             } else {

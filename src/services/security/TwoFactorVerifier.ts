@@ -1,5 +1,5 @@
 import { serviceRegistry } from '@/ServiceRegistry';
-import { UserService } from './user/UserService';
+import { AppUserService } from './user/AppUserService';
 import { AppUser } from '@/models/security/AppUser';
 import { logger } from '@/utils/Logger';
 
@@ -14,7 +14,7 @@ export class TwoFactorVerifier {
     }
 
     private async verify (smsCodeOrToken: number | string, userId = 0): Promise<AppUser> {
-        const userService = serviceRegistry.getService(UserService);
+        const userService = serviceRegistry.getService(AppUserService);
 
         if (!smsCodeOrToken) {
             return Promise.resolve(null);

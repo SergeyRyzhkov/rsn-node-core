@@ -6,7 +6,7 @@ import { Guid } from '@/utils/Guid';
 import { AppConfig } from '@/utils/Config';
 import { plainToClass } from 'class-transformer';
 
-export class UserSessionService extends BaseService {
+export class AppUserSessionService extends BaseService {
 
   public async getByToken (token: string) {
     const dbResult = await postgresWrapper.oneOrNoneWhere('app_user_session', 'user_session_token=$1', [token]);

@@ -19,7 +19,7 @@ import { SessionUser } from '../../../models/security/SessionUser';
 
 // SELECT * FROM t_func (1); 
 
-export class UserService extends BaseService {
+export class AppUserService extends BaseService {
 
   public async getById (userId: number) {
     const dbResult = await postgresWrapper.oneOrNoneWhere('app_user', 'app_user_id=$1', [userId]);

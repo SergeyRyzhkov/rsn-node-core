@@ -47,6 +47,7 @@ export const displayFormatTypeFromRequest = (options?: { required?: boolean }) =
   })
 }
 
+// FIXME: Rename
 export const sortFilterPaginationFromRequest = (options?: { required?: boolean }) => {
   return createParamDecorator({
     required: options && options.required ? true : false,

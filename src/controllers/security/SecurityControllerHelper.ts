@@ -63,7 +63,7 @@ export class SecurityControllerHelper {
         }
     }
 
-    public static getSessionUser (req: Request) {
+    public static getSessionUser (req: Request): SessionUser {
         return this.isUserAuthorized(req) ? req.session.sessionUser : SessionUser.anonymousUser;
     }
 

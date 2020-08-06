@@ -1,5 +1,5 @@
 import { serviceRegistry } from '@/ServiceRegistry';
-import { UserService } from '../user/UserService';
+import { AppUserService } from '../user/AppUserService';
 import { ChangePasswordStatus, ChangePwdResult } from '@/services/security/reset/ChangePwdResult';
 import { AuthResult, LogonStatus } from '../auth/AuthResult';
 import { isPasswordStrenght } from '@/utils/Validators';
@@ -13,19 +13,19 @@ export class ResetChangePwdService extends BaseService {
     // Запрос на восстановление пароля
     public async sendResetPasswordMessage (login: string) {
         // Ищем пользователя по мылу
-        const appUser = await serviceRegistry.getService(UserService).getByLogin(login);
+        const appUser = await serviceRegistry.getService(AppUserService).getByLogin(login);
         if (appUser) {
             //        const code = await this.twoFactorStrategy.sendResetPasswordMessage(appUser);
             appUser.appUserResetPwdDate = new Date(Date.now()).toUTCString();
             // appUser.appUserResetPwd = code;
-            await serviceRegistry.getService(UserService).save(appUser);
+            await serviceRegistry.getService(AppUserService).save(appUser);
         }
         return appUser;
     }
 
     // Проверка кода (токена) на восстановление
     public async checkResetPasswordCode (code: string) {
-        const appUser = await serviceRegistry.getService(UserService).getByResetPasswordToken(code);
+        const appUser = await serviceRegistry.getService(AppUserService).getByResetPasswordToken(code);
         if (!appUser) {
             return null;
         }
@@ -37,7 +37,7 @@ export class ResetChangePwdService extends BaseService {
 
         appUser.appUserResetPwd = null;
         appUser.appUserResetPwdDate = null;
-        return await serviceRegistry.getService(UserService).save(appUser);
+        return await serviceRegistry.getService(AppUserService).save(appUser);
     }
 
     // Смена пароля
@@ -84,7 +84,7 @@ export class ResetChangePwdService extends BaseService {
         const appUser = new AppUser();
         appUser.appUserId = sessionUser.appUserId;
         //  appUser.appUserPwdHash = bcrypt.hashSync(newPassword, AuthService.bcryptSaltRounds);
-        serviceRegistry.getService(UserService).save(appUser);
+        serviceRegistry.getService(AppUserService).save(appUser);
     }
 
 }

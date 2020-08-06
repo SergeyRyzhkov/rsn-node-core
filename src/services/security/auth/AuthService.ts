@@ -5,8 +5,8 @@ import bcrypt from 'bcrypt';
 import { InternalServerError } from '@/exceptions/serverErrors/InternalServerError';
 import { AuthResult, LogonStatus } from './AuthResult';
 import { PassportProviders } from '../PassportProviders';
-import { UserSessionService } from '../user/UserSessionService';
-import { UserService } from '../user/UserService';
+import { AppUserSessionService } from '../user/AppUserSessionService';
+import { AppUserService } from '../user/AppUserService';
 import { JWTHelper } from '../JWTHelper';
 import { SessionUser } from '../../../models/security/SessionUser';
 import { InvalidTokenException } from '@/exceptions/authErrors/InvalidTokenException';
@@ -37,7 +37,7 @@ export class AuthService extends BaseService {
 
     try {
 
-      const user = this.options.isLoginByPhone ? await serviceRegistry.getService(UserService).getByPhone(login) : await serviceRegistry.getService(UserService).getByLogin(login);
+      const user = this.options.isLoginByPhone ? await serviceRegistry.getService(AppUserService).getByPhone(login) : await serviceRegistry.getService(AppUserService).getByLogin(login);
 
       // Нет такого пользователя (с логином)
       if (!user) {
@@ -54,9 +54,9 @@ export class AuthService extends BaseService {
         // Если на клиенте был авторизованный профиль соц.сети - линкуем
         if (!!unlinkedSocialProfile && unlinkedSocialProfile.userSnProfileId > 0) {
           unlinkedSocialProfile.appUserId = user.appUserId;
-          const userSocProfile = await serviceRegistry.getService(UserService).linkSessionUserToSocialNetwork(unlinkedSocialProfile.userSnProfileType, unlinkedSocialProfile);
+          const userSocProfile = await serviceRegistry.getService(AppUserService).linkSessionUserToSocialNetwork(unlinkedSocialProfile.userSnProfileType, unlinkedSocialProfile);
           if (userSocProfile) {
-            sessionUser = serviceRegistry.getService(UserService).convertAppUserSocialNetProfileToSessionUser(userSocProfile);
+            sessionUser = serviceRegistry.getService(AppUserService).convertAppUserSocialNetProfileToSessionUser(userSocProfile);
             sessionUser.appUserRegVerifiedInd = user.appUserRegVerifiedInd;
             sessionUser.appUserRegDate = user.appUserRegDate;
           }
@@ -64,7 +64,7 @@ export class AuthService extends BaseService {
 
         // Все нормально (пароль валидный).
         if (!sessionUser) {
-          sessionUser = serviceRegistry.getService(UserService).convertAppUserToSessionUser(user);
+          sessionUser = serviceRegistry.getService(AppUserService).convertAppUserToSessionUser(user);
         }
 
         // Требуется подтверждение по SMS
@@ -118,9 +118,9 @@ export class AuthService extends BaseService {
 
       if (logonResult.logonStatus === LogonStatus.Unknown) {
         // Ищем пользователя по идентификатору профиля
-        sessionUser = await serviceRegistry.getService(UserService).getSessionUserByProfileCode(authStrategyType, profile.id);
+        sessionUser = await serviceRegistry.getService(AppUserService).getSessionUserByProfileCode(authStrategyType, profile.id);
         if (sessionUser && sessionUser.appUserId !== 0) {
-          appUser = await serviceRegistry.getService(UserService).getByLogin(sessionUser.appUserName);
+          appUser = await serviceRegistry.getService(AppUserService).getByLogin(sessionUser.appUserName);
         }
       }
 
@@ -129,7 +129,7 @@ export class AuthService extends BaseService {
       if (logonResult.logonStatus === LogonStatus.Unknown && !appUser) {
         const tryEmail = profile.email ? profile.email : (profile.emails && profile.emails.length > 0 ? profile.emails[0].value : null);
         if (tryEmail) {
-          appUser = await serviceRegistry.getService(UserService).getByLogin(tryEmail);
+          appUser = await serviceRegistry.getService(AppUserService).getByLogin(tryEmail);
         }
       }
 
@@ -145,16 +145,16 @@ export class AuthService extends BaseService {
 
       // Профиля в базе нет, Почты нет или не нашли в базе, но аутентификация через соц сеть прошла
       if (logonResult.logonStatus === LogonStatus.Unknown && !appUser && socialNetworkName) {
-        sessionUser = serviceRegistry.getService(UserService).convertProfileToSessionUser(authStrategyType, profile)
+        sessionUser = serviceRegistry.getService(AppUserService).convertProfileToSessionUser(authStrategyType, profile)
         logonResult.makeUserNotFoundButSocialNetworkAuthOk(sessionUser);
         logonResult.message = this.options.userNotFoundButSocialNetworkAuthOkMessage + socialNetworkName;
       }
 
       // Есть пользователе с почтой или ранее профиль был связан, линкуем или обновляем профиль
       if (logonResult.logonStatus === LogonStatus.Unknown && appUser) {
-        const userSocProfile = await serviceRegistry.getService(UserService).linkToSocialNetwork(appUser.appUserId, authStrategyType, profile);
+        const userSocProfile = await serviceRegistry.getService(AppUserService).linkToSocialNetwork(appUser.appUserId, authStrategyType, profile);
         if (userSocProfile) {
-          sessionUser = serviceRegistry.getService(UserService).convertAppUserSocialNetProfileToSessionUser(userSocProfile);
+          sessionUser = serviceRegistry.getService(AppUserService).convertAppUserSocialNetProfileToSessionUser(userSocProfile);
           sessionUser.appUserRegVerifiedInd = appUser.appUserRegVerifiedInd;
           sessionUser.appUserRegDate = appUser.appUserRegDate;
           logonResult.makeOKResult(sessionUser, this.options.authOkMessage);
@@ -183,9 +183,9 @@ export class AuthService extends BaseService {
         verifiedUser.appUserRegVerifiedInd = 1;
         verifiedUser.appUserRegToken = null;
         verifiedUser.appUserSmsCode = null;
-        await serviceRegistry.getService(UserService).save(verifiedUser);
+        await serviceRegistry.getService(AppUserService).save(verifiedUser);
 
-        const sessionUser = serviceRegistry.getService(UserService).convertAppUserToSessionUser(verifiedUser);
+        const sessionUser = serviceRegistry.getService(AppUserService).convertAppUserToSessionUser(verifiedUser);
         result.newAccessToken = await this.autoLoginUser(sessionUser);
         result.makeOKResult(sessionUser, this.options.authOkMessage);
       } else {
@@ -201,17 +201,17 @@ export class AuthService extends BaseService {
 
   // Логиним пользоваиеля после логина, регистрации, или подтверждения через почту (смс), или смене пароля
   public async autoLoginUser (sessionUser: SessionUser) {
-    const newSession = await serviceRegistry.getService(UserSessionService).createSession(sessionUser.appUserId);
+    const newSession = await serviceRegistry.getService(AppUserSessionService).createSession(sessionUser.appUserId);
     const newAccessToken = JWTHelper.generateAccessToken(sessionUser, newSession.userSessionToken);
     return newAccessToken;
   }
 
   public async logout (sessionToken: string) {
-    return serviceRegistry.getService(UserSessionService).delete(sessionToken);
+    return serviceRegistry.getService(AppUserSessionService).delete(sessionToken);
   }
 
   public async logoutFromAll (appUserId: number) {
-    return serviceRegistry.getService(UserSessionService).deleteAllByUser(appUserId)
+    return serviceRegistry.getService(AppUserSessionService).deleteAllByUser(appUserId)
   }
 
   // Используется в мидлваре при каждом запросе для проверки и обновления токена
@@ -233,27 +233,27 @@ export class AuthService extends BaseService {
         }
 
         const sessionToken = JWTHelper.getJwtId(accessToken);
-        const session: AppUserSession = await serviceRegistry.getService(UserSessionService).getByToken(sessionToken);
+        const session: AppUserSession = await serviceRegistry.getService(AppUserSessionService).getByToken(sessionToken);
         // Если сессия не акутальна (протухла) или ее нет - на авторизацию
         if (!session) {
-          serviceRegistry.getService(UserSessionService).delete(sessionToken);
+          serviceRegistry.getService(AppUserSessionService).delete(sessionToken);
           throw new UserSessionExpiredException('Session not found');
         }
 
-        if (serviceRegistry.getService(UserSessionService).isExpired(session)) {
-          serviceRegistry.getService(UserSessionService).delete(sessionToken);
+        if (serviceRegistry.getService(AppUserSessionService).isExpired(session)) {
+          serviceRegistry.getService(AppUserSessionService).delete(sessionToken);
           throw new UserSessionExpiredException('Session is expired');
         }
 
         // FIXME: Учесть время подтверждения по SMS
         // Если не подтвержден email
         if (session.appUserId > 0 && session.appUserRegVerifiedInd !== 1 && ((Date.now() - Date.parse(session.appUserRegDate)) > AppConfig.authConfig.emailVerify.options.expiresIn * 1000)) {
-          serviceRegistry.getService(UserService).delete(session.appUserId);
+          serviceRegistry.getService(AppUserService).delete(session.appUserId);
           throw new UserSessionExpiredException('Registration is not verified');
         }
 
         // Все хорошо - увеличиваем дату окончания сессии
-        serviceRegistry.getService(UserSessionService).refreshSession(session);
+        serviceRegistry.getService(AppUserSessionService).refreshSession(session);
         return JWTHelper.generateAccessToken(tokenUser, session.userSessionToken);
       }
 
@@ -270,7 +270,7 @@ export class AuthService extends BaseService {
   // Отправка смс - для подтверждения входа
   private async sendSmsConfirmRegistrationMessage (user: AppUser) {
     user.appUserSmsCode = 77777;
-    return await serviceRegistry.getService(UserService).save(user);
+    return await serviceRegistry.getService(AppUserService).save(user);
   }
 }
 
