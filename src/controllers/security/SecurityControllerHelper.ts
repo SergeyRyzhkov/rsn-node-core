@@ -21,12 +21,8 @@ export class SecurityControllerHelper {
             maxAge: 500e3,
             httpOnly: true,
             hostOnly: false,
-            secure: false,
+            secure: res.app.get('env') === 'production',
             sameSite: true
-        }
-
-        if (res.app.get('env') === 'production') {
-            cookieOptions.secure = true;
         }
 
         res.cookie(AppConfig.authConfig.cookieName, JSON.stringify(cookie), cookieOptions);
@@ -50,7 +46,6 @@ export class SecurityControllerHelper {
 
         return null;
     }
-
 
     public static setSessionUserAnonymous (req: Request, res: Response) {
         if (!!req && !!req.session) {

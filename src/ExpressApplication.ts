@@ -13,9 +13,6 @@ import helmet from 'helmet';
 import session from 'express-session';
 import { verifyAndUpdateAccessToken } from './middleware/SecurityMiddlewares';
 import cookieParser from 'cookie-parser';
-import { serviceRegistry } from './ServiceRegistry';
-import { PassportProviders } from './services/security/PassportProviders';
-import passport from 'passport';
 
 // FIXME: Было бы удобно еще регистрировать массив сервисов
 
@@ -98,12 +95,10 @@ export class ExpressApplication {
       resave: true,
       saveUninitialized: false,
       cookie: {
-        secure: true,
-        sameSite: true
+        secure: this.app.get('env') === 'production',
+        sameSite: true,
+        maxAge: AppConfig.authConfig.JWT.refresh.options.expiresIn * 1000
       }
-    }
-    if (this.app.get('env') !== 'production') {
-      sessionOptions.cookie.secure = false;
     }
     this.app.use(session(sessionOptions));
 
