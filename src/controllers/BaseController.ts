@@ -4,7 +4,6 @@ import { ResponseWrapper } from './ResponseWrapper';
 import { Exception } from '@/exceptions/Exception';
 import { ClientNotifyMessage } from './ClientNotifyMessage';
 import { createParamDecorator } from 'routing-controllers';
-import { DisplayFormatType } from '@/models/DisplayFormatType';
 import { InternalServerError } from '@/exceptions/serverErrors/InternalServerError';
 
 export class BaseController {
@@ -36,15 +35,6 @@ export class BaseController {
     const loc = process.env.NODE_ENV === 'development' ? `https://dom.npobaltros.ru/` : location
     return this.createSuccessResponse({}, response.location(loc), 302);
   }
-}
-
-export const displayFormatTypeFromRequest = (options?: { required?: boolean }) => {
-  return createParamDecorator({
-    required: options && options.required ? true : false,
-    value: (action) => {
-      return action.request.query.format === DisplayFormatType.Grid ? DisplayFormatType.Grid : DisplayFormatType.Tile;
-    }
-  })
 }
 
 // FIXME: Rename

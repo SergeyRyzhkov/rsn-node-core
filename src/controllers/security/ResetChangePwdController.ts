@@ -1,10 +1,10 @@
 import { JsonController, Post, BodyParam, Req, Res, Get, Param } from 'routing-controllers';
 import { Request, Response } from 'express';
 import { BaseController } from '../BaseController';
-import { serviceRegistry } from '@/ServiceRegistry';
+import { ServiceRegistry } from '@/ServiceRegistry';
 import { ClientNotifyMessage } from '../ClientNotifyMessage';
 import { ResetChangePwdService } from '@/services/security/reset/ResetChangePwdService';
-import { SecurityControllerHelper } from './SecurityControllerHelper';
+import { SecurityHelper } from './SecurityHelper';
 
 @JsonController('/user')
 export class ResetChangePwdController extends BaseController {
@@ -16,8 +16,9 @@ export class ResetChangePwdController extends BaseController {
         @Res() response: Response) {
 
         try {
-            SecurityControllerHelper.setSessionUserAnonymous(request, response);
-            const appUser = await serviceRegistry.getService(ResetChangePwdService).sendResetPasswordMessage(login);
+            SecurityHelper.clearJWTCookie(response);
+
+            const appUser = await ServiceRegistry.instance.getService(ResetChangePwdService).sendResetPasswordMessage(login);
             const alertText = !appUser
                 ? 'Ошибка!'
                 : `На адрес ${login} отправлено письмо с инструкциями для восстановления пароля`;
@@ -33,7 +34,7 @@ export class ResetChangePwdController extends BaseController {
     //     @Req() request: Request,
     //     @Res() response: Response) {
 
-    //     const verifier = (token: string) => serviceRegistry.getService(ResetChangePwdService).checkResetOrChangePasswordCode(code);
+    //     const verifier = (token: string) => ServiceRegistry.instance.getService(ResetChangePwdService).checkResetOrChangePasswordCode(code);
     //     return this.verifyUserByToken(request, response, token, verifier, LogonStatus.ShouldChangePassword, `/auth/callback/login`, true)
     // }
 }

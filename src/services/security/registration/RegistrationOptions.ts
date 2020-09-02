@@ -9,9 +9,6 @@ export class RegistrationOptions {
     // Логином явялется номер телефона или почта?
     public isLoginByPhone = true;
 
-    // Залогинить пользователя, сразу, недожидаяcь подтверждения по почте
-    public isAutoLogin = false;
-
     // Требуется подтверждение регистрации по почте (имеет смысл только если isLoginByPhone = false)
     public isRequireConfirmationByEmail = true;
 
@@ -44,9 +41,6 @@ export class RegistrationOptions {
     public invalidPhoneMessage = 'Неверно указан телефон';
 
     public passwordNotStrenghtMessage = 'Пароль должен содержать не менее 8 символов включая цифры, прописные и строчные буквы'
-
-    // Сообщение, если автологинили пользователя, но все равно необходимо подтвердить
-    public requireEmailMessage = 'В Ваш адрес отправлено письмо для проверки электронной почты. Перейдите по ссылке из письма, иначе через сутки аккаунт будет удален'
 
     // Сообщение, если НЕ автологинили пользователя И необходимо подтвердить
     public requireConfirmationEmailMessage = 'В Ваш адрес отправлено письмо. Перейдите по ссылке из письма для завершения регистрации'

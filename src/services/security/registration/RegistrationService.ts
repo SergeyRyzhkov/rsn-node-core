@@ -1,6 +1,6 @@
 import { BaseService } from '../../BaseService';
 import { RegistrationResult } from '@/services/security/registration/RegistrationResult';
-import { serviceRegistry } from '@/ServiceRegistry';
+import { ServiceRegistry } from '@/ServiceRegistry';
 import { AppUserService } from '../user/AppUserService';
 import { AppUser } from '@/models/security/AppUser';
 import { AuthService } from '../auth/AuthService';
@@ -12,6 +12,7 @@ import { AppConfig } from '@/utils/Config';
 import { Guid } from '@/utils/Guid';
 import { SessionUser } from '../../../models/security/SessionUser';
 import { TwoFactorVerifier } from '../TwoFactorVerifier';
+import { AppUserSessionService } from '../user/AppUserSessionService';
 
 export class RegistrationService extends BaseService {
     private options: RegistrationOptions;
@@ -42,7 +43,7 @@ export class RegistrationService extends BaseService {
         // }
 
         try {
-            const userService = serviceRegistry.getService(AppUserService);
+            const userService = ServiceRegistry.instance.getService(AppUserService);
             const user = await userService.getByLogin(login);
 
             // Уже существует с таким логином
@@ -54,9 +55,10 @@ export class RegistrationService extends BaseService {
             const newAppUser = new AppUser();
             newAppUser.appUserLogin = login;
             newAppUser.appUserMail = !this.options.isLoginByPhone && !!newAppUser.appUserMail ? login : newAppUser.appUserMail
-
             newAppUser.appUserPwdHash = bcrypt.hashSync(password, this.options.bcryptSaltRounds);
             newAppUser.appUserRegDate = new Date(Date.now()).toUTCString();
+            newAppUser.appUserRegVerifiedInd = !this.options.isRequireConfirmationByEmail && !this.options.isRequireConfirmationBySms ? 1 : 0;
+
             await userService.save(newAppUser);
 
             // Если на клиенте был авторизованный профиль соц.сети - линкуем
@@ -75,6 +77,8 @@ export class RegistrationService extends BaseService {
                 sessionUser = userService.convertAppUserToSessionUser(newAppUser);
             }
 
+            registrationResult.newAccessToken = await ServiceRegistry.instance.getService(AppUserSessionService).saveUserSessionAndCreateJwt(sessionUser);
+
             // Отправляем запрос на подтверждение по смс
             if (this.options.isRequireConfirmationBySms) {
                 await this.sendSmsConfirmRegistrationMessage(newAppUser);
@@ -82,20 +86,14 @@ export class RegistrationService extends BaseService {
             }
 
             // Отправляем запрос на подтверждение по почте
-            if (this.options.isRequireConfirmationByEmail && !this.options.isAutoLogin) {
+            if (this.options.isRequireConfirmationByEmail) {
                 await this.sendMailConfirmRegistrationMessage(newAppUser);
                 return registrationResult.makeRequereConfirmByEmail(this.options.requireConfirmationEmailMessage);
             }
 
-            // Логиним если в параметрах автологин (то есть подтверждение по почте потом (или не надо)) или не нужно подтверждение вообще
-            if (this.options.isAutoLogin) {
-                const newAccessToken = await serviceRegistry.getService(AuthService).autoLoginUser(sessionUser);
-                registrationResult.newAccessToken = newAccessToken;
-                const message = this.options.isRequireConfirmationByEmail ? this.options.requireEmailMessage : this.options.registrationCompliteMessage;
-                return registrationResult.makeOK(sessionUser, message);
-            }
+            const message = this.options.isRequireConfirmationByEmail ? this.options.requireConfirmationEmailMessage : this.options.registrationCompliteMessage;
+            return registrationResult.makeOK(sessionUser, message);
 
-            return registrationResult;
         } catch (err) {
             logger.error(err);
             return registrationResult.makeInvalid();
@@ -104,18 +102,18 @@ export class RegistrationService extends BaseService {
 
     public async confirmRegistrationByEmail (token: string) {
         const user = await this.twoFactorVerifier.verifyByEmailLink(token);
-        return this.autoLogonUserAfter2FA(user);
+        return this.onConfirmRegistration(user);
     }
 
     public async confirmRegistrationByCode (code: number, userId: number) {
         const user = await this.twoFactorVerifier.verifyByCode(code, userId);
-        return this.autoLogonUserAfter2FA(user);
+        return this.onConfirmRegistration(user);
     }
 
     // Отправка почты - для подтверждения регистрации
     public async sendMailConfirmRegistrationMessage (user: AppUser) {
         user.appUserRegToken = Guid.newGuid();
-        await serviceRegistry.getService(AppUserService).save(user);
+        await ServiceRegistry.instance.getService(AppUserService).save(user);
 
         const format = (template: string) => {
             const clientConfirmUrl = `${this.options.сonfirMailUrl}/${user.appUserRegToken}`;
@@ -135,10 +133,10 @@ export class RegistrationService extends BaseService {
     // Отправка смс - для подтверждения регистрации
     public async sendSmsConfirmRegistrationMessage (user: AppUser) {
         user.appUserSmsCode = 55555;
-        return await serviceRegistry.getService(AppUserService).save(user);
+        return await ServiceRegistry.instance.getService(AppUserService).save(user);
     }
 
-    private async autoLogonUserAfter2FA (verifiedUser: AppUser) {
+    private async onConfirmRegistration (verifiedUser: AppUser) {
         const registrationResult: RegistrationResult = new RegistrationResult();
 
         try {
@@ -146,10 +144,8 @@ export class RegistrationService extends BaseService {
                 verifiedUser.appUserRegVerifiedInd = 1;
                 verifiedUser.appUserRegToken = null;
                 verifiedUser.appUserSmsCode = null;
-                await serviceRegistry.getService(AppUserService).save(verifiedUser);
-
-                const sessionUser = serviceRegistry.getService(AppUserService).convertAppUserToSessionUser(verifiedUser);
-                registrationResult.newAccessToken = await serviceRegistry.getService(AuthService).autoLoginUser(sessionUser);
+                await ServiceRegistry.instance.getService(AppUserService).save(verifiedUser);
+                const sessionUser = ServiceRegistry.instance.getService(AppUserService).convertAppUserToSessionUser(verifiedUser);
                 registrationResult.makeOK(sessionUser, this.options.registrationCompliteMessage);
             } else {
                 registrationResult.makeInvalid(this.options.invalidConfirmationCodeMessage);

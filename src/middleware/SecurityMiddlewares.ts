@@ -1,16 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
-import { JWTHelper } from '@/services/security/JWTHelper';
-import { serviceRegistry } from '@/ServiceRegistry';
+import { ServiceRegistry } from '@/ServiceRegistry';
 import { AuthService } from '@/services/security/auth/AuthService';
-import { AppConfig } from '@/utils/Config';
 import { Unauthorized } from '@/exceptions/authErrors/Unauthorized';
-import { SecurityControllerHelper } from '@/controllers/security/SecurityControllerHelper';
+import { SecurityHelper } from '@/controllers/security/SecurityHelper';
 import { ForbiddenException } from '@/exceptions/authErrors/ForbiddenException';
 
 // FIXME: А если пользователь зарегеисрировался, но не подтвердил и это можно (пока не истечет время подтверждения), то не пустет все равно :(
 export const authorized = (errorMessage?: string) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    if (!SecurityControllerHelper.isUserAuthorized(req)) {
+    if (!SecurityHelper.isUserAuthorized(req)) {
       next(new Unauthorized(errorMessage));
     } else {
       next();
@@ -22,7 +20,7 @@ export const authorized = (errorMessage?: string) => {
 // Юзверь залогинился, но еще не подтвердил регистрацию кодом или логин кодом
 export const temporaryAuthorized = (errorMessage?: string) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    if (!SecurityControllerHelper.isUserTemporaryAuthorized(req)) {
+    if (!SecurityHelper.isUserTemporaryAuthorized(req)) {
       next(new Unauthorized(errorMessage));
     } else {
       next();
@@ -44,10 +42,9 @@ export const permit = (...allowedRoles: number[]) => {
   }
 
   return async (req: Request, res: Response, next: NextFunction) => {
-    const user = SecurityControllerHelper.getSessionUser(req);
+    const user = SecurityHelper.getSessionUserFromToken(req);
 
-    if (SecurityControllerHelper.isUserAuthorized(req) && isAllowed(user.roleIdList)) {
-
+    if (!!user && SecurityHelper.isUserAuthorized(req) && isAllowed(user.roleIdList)) {
       next();
     } else {
       next(new ForbiddenException());
@@ -55,24 +52,20 @@ export const permit = (...allowedRoles: number[]) => {
   }
 }
 
-export const verifyAndUpdateAccessToken = () => {
+export const verifyOrUpdateAccessToken = () => {
   return async (req: Request, res: Response, next: NextFunction) => {
 
-    const jwtCookie = req.cookies[AppConfig.authConfig.cookieName];
-    if (!!jwtCookie) {
+    const jwt = SecurityHelper.getAccessToken(req);
+
+    if (!!jwt) {
       try {
-        const jwtObj = JSON.parse(jwtCookie);
-        const jwt = jwtObj.accessToken;
-        const newAccessToken = await serviceRegistry.getService(AuthService).verifyAndUpdateAccessToken(jwt);
-        const sessionUser = JWTHelper.getTokenUser(newAccessToken);
-
-        SecurityControllerHelper.setSessiontUser(sessionUser, req);
-        SecurityControllerHelper.setJWTCookie(res, newAccessToken);
-
+        const newAccessToken = await ServiceRegistry.instance.getService(AuthService).verifyUpdateAccessToken(jwt);
+        SecurityHelper.setJWTCookie(res, newAccessToken);
       } catch (err) {
-        SecurityControllerHelper.setSessionUserAnonymous(req, res);
+        SecurityHelper.clearJWTCookie(res);
       }
     }
+
     next();
   }
 }

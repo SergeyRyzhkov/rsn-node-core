@@ -3,6 +3,7 @@ export class AuthOptions {
     // Логином явялется номер телефона или почта?
     public isLoginByPhone = true;
 
+    // FIXME: Треьуется подтверждение по коду в почте
     // Требуется подтверждение регистрации по SMS 
     public isRequireConfirmationBySms = true;
 

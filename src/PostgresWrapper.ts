@@ -147,6 +147,7 @@ class PostgresWrapper {
     return this.postgrePromise.none(statement, params);
   }
 
+  // FIXME: Для пагинации обязательно нужен order
   private buildSelectStatement (tableName: string, sortFilterPagin?: SortPagination, whereStmt?: string) {
     const selectStmtp = `SELECT * FROM ${tableName}`;
     let whereAdd = '';

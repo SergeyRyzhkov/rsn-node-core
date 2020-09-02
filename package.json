@@ -58,7 +58,6 @@
     "cors": "latest",
     "cuid": "latest",
     "express": "latest",
-    "express-session": "^1.17.1",
     "express-validator": "latest",
     "helmet": "latest",
     "http-proxy-agent": "latest",

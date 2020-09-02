@@ -2,6 +2,8 @@ import { Exception } from '@/exceptions/Exception';
 import { SessionUser } from '../../../models/security/SessionUser';
 // import { Exception } from '../../exceptions/Exception';
 
+// FIXME: Может быть подтверждение и по почтовому коду
+// FIXME: Отдельно учесь неверный код подтверждения и или истек срок действия (это разные? д.б.)
 export enum LogonStatus {
   OK,
   ShouldChangePassword,

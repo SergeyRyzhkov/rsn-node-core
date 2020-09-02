@@ -1,17 +1,12 @@
 import { BaseController } from '@/controllers/BaseController';
-import passport from 'passport';
 import { Request, Response } from 'express';
 import { AuthResult, LogonStatus } from '@/services/security/auth/AuthResult';
 import { Param, Post, Req, Res, JsonController, Get, BodyParam, UseBefore } from 'routing-controllers';
-import { JWTHelper } from '@/services/security/JWTHelper';
-import { Unauthorized } from '@/exceptions/authErrors/Unauthorized';
-import { Guid } from '@/utils/Guid';
-import { PassportProviders } from '@/services/security/PassportProviders';
-import { BadRequest } from '@/exceptions/clientErrors/BadRequest';
-import { serviceRegistry } from '@/ServiceRegistry';
+import { ServiceRegistry } from '@/ServiceRegistry';
 import { AuthService } from '@/services/security/auth/AuthService';
-import { authorized, temporaryAuthorized } from '@/middleware/SecurityMiddlewares';
-import { SecurityControllerHelper } from './SecurityControllerHelper';
+import { temporaryAuthorized } from '@/middleware/SecurityMiddlewares';
+import { SecurityHelper } from './SecurityHelper';
+import { SessionUser } from '@/models/security/SessionUser';
 
 @JsonController('/auth')
 export class AuthController extends BaseController {
@@ -19,10 +14,13 @@ export class AuthController extends BaseController {
   @Get('/user')
   public async getCurrentSessionUser (
     @Req() request: Request,
-    @Res() response: Response, ) {
+    @Res() response: Response,) {
 
-    const user = SecurityControllerHelper.getSessionUser(request);
-    return this.createSuccessResponse(user, response);
+    // Получим пользователя из токена, но он может еще не прошел проверку по коду (логина или регистрации, если нужна была)
+    let sessionUser = SecurityHelper.getSessionUserFromToken(request);
+    sessionUser = ServiceRegistry.instance.getService(AuthService).isUserAuthorized(sessionUser) ? sessionUser : SessionUser.anonymousUser;
+
+    return this.createSuccessResponse(sessionUser, response);
   }
 
   @Post('/login')
@@ -32,22 +30,21 @@ export class AuthController extends BaseController {
     @BodyParam('login') login: string,
     @BodyParam('password') password: string) {
 
+    // чистим куку с токеном
+    SecurityHelper.clearJWTCookie(response);
+
     try {
 
-      const logonResult = await serviceRegistry.getService(AuthService).loginByPassword(login, password, request.body.unlinkedSocialUser);
+      const logonResult = await ServiceRegistry.instance.getService(AuthService).loginByPassword(login, password, request.body.unlinkedSocialUser);
 
-      // Устанавливаем в сесии анонима и чистим куку с токеном
-      SecurityControllerHelper.setSessionUserAnonymous(request, response);
-
-      // Выставляем в сессию юзверя сессионого и высталяем куку с токеном
+      // Выставляем куку с токеном
       if (logonResult.logonStatus === LogonStatus.OK) {
-        SecurityControllerHelper.setSessiontUser(logonResult.sessionUser, request);
-        SecurityControllerHelper.setJWTCookie(response, logonResult.newAccessToken);
+        SecurityHelper.setJWTCookie(response, logonResult.newAccessToken);
       }
 
-      // Если требуется подтверждение по SMS, то сбрасываем юзверя, будем ждать подтверждения
+      // Если требуется подтверждение по SMS, то сбрасываем юзверя (на клиенте должен быть выставлен ананимус), будем ждать подтверждения
       if (logonResult.logonStatus === LogonStatus.RequereConfirmBySmsCode) {
-        SecurityControllerHelper.setSessiontUser(logonResult.sessionUser, request);
+        SecurityHelper.setJWTCookie(response, logonResult.newAccessToken);
         delete logonResult.sessionUser;
       }
 
@@ -70,15 +67,10 @@ export class AuthController extends BaseController {
     @Res() response: Response) {
 
     try {
-      const sessionUser = SecurityControllerHelper.getSessionUser(request);
-      const result = await serviceRegistry.getService(AuthService).confirmLoginByCode(code, sessionUser.appUserId);
-
-      if (result.logonStatus === LogonStatus.OK) {
-        SecurityControllerHelper.setSessiontUser(result.sessionUser, request);
-        SecurityControllerHelper.setJWTCookie(response, result.newAccessToken);
-      }
-
+      const sessionUser = SecurityHelper.getSessionUserFromToken(request);
+      const result = await ServiceRegistry.instance.getService(AuthService).confirmLoginByCode(code, sessionUser);
       delete result.newAccessToken;
+
       return this.createSuccessResponse(result, response);
 
     } catch (err) {
@@ -94,8 +86,11 @@ export class AuthController extends BaseController {
     @Res() response: Response) {
 
     try {
-      SecurityControllerHelper.setSessionUserAnonymous(request, response);
-      serviceRegistry.getService(AuthService).logout(SecurityControllerHelper.getAccessToken(request));
+      const sessionToken = SecurityHelper.getSessionToken(request);
+      SecurityHelper.clearJWTCookie(response);
+
+      ServiceRegistry.instance.getService(AuthService).logout(sessionToken);
+
       return this.createSuccessResponse({}, response);
     } catch (err) {
       return this.createFailureResponse(err, response);

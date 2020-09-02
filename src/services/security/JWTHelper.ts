@@ -13,13 +13,13 @@ export class JWTHelper {
     return jwt.sign(payload, AppConfig.authConfig.JWT.access.secretKey, jwtOptions);
   }
 
-  public static extendAccessToken (oldToken: string): string {
-    const oldPayload = jwt.decode(oldToken, { complete: false, json: true }) as any;
-    const sessionId = oldPayload.jti;
-    this.deleteClaimProperties(oldPayload);
-    const jwtOptions = { ...AppConfig.authConfig.JWT.access.options, jwtid: sessionId };
-    return jwt.sign(oldPayload, AppConfig.authConfig.JWT.access.secretKey, jwtOptions);
-  }
+  // public static extendAccessToken (oldToken: string): string {
+  //   const oldPayload = jwt.decode(oldToken, { complete: false, json: true }) as any;
+  //   const sessionId = oldPayload.jti;
+  //   this.deleteClaimProperties(oldPayload);
+  //   const jwtOptions = { ...AppConfig.authConfig.JWT.access.options, jwtid: sessionId };
+  //   return jwt.sign(oldPayload, AppConfig.authConfig.JWT.access.secretKey, jwtOptions);
+  // }
 
   public static verifyAccessToken (token: string) {
     const jwtOptions = AppConfig.authConfig.JWT.access.options;

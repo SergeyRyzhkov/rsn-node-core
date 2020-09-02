@@ -1,5 +1,5 @@
 
-export interface SortPagination {
+export type SortPagination = {
   sort?: {
     sortField?: string;
     sortType?: string;

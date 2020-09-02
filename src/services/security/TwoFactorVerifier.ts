@@ -1,8 +1,9 @@
-import { serviceRegistry } from '@/ServiceRegistry';
+import { ServiceRegistry } from '@/ServiceRegistry';
 import { AppUserService } from './user/AppUserService';
 import { AppUser } from '@/models/security/AppUser';
 import { logger } from '@/utils/Logger';
 
+// FIXME: Это можно вынести в AppUserService или AppUserSessionService
 export class TwoFactorVerifier {
 
     public async verifyByEmailLink (emailCode: string): Promise<AppUser> {
@@ -13,8 +14,9 @@ export class TwoFactorVerifier {
         return this.verify(code, userId);
     }
 
+    // FIXME: Криво как-то с этим userId > 0
     private async verify (smsCodeOrToken: number | string, userId = 0): Promise<AppUser> {
-        const userService = serviceRegistry.getService(AppUserService);
+        const userService = ServiceRegistry.instance.getService(AppUserService);
 
         if (!smsCodeOrToken) {
             return Promise.resolve(null);
@@ -23,7 +25,6 @@ export class TwoFactorVerifier {
         try {
 
             let verifiedUser: AppUser;
-
             // Подтверждение через код (например SMS) (с контроллера вызвали с SessionUser), проверим у пользователя ранее высталенный код
             if (userId > 0) {
                 verifiedUser = await userService.getById(userId);

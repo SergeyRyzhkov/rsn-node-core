@@ -5,6 +5,8 @@ import { postgresWrapper } from '@/PostgresWrapper';
 import { Guid } from '@/utils/Guid';
 import { AppConfig } from '@/utils/Config';
 import { plainToClass } from 'class-transformer';
+import { SessionUser } from '@/models/security/SessionUser';
+import { JWTHelper } from '../JWTHelper';
 
 export class AppUserSessionService extends BaseService {
 
@@ -18,18 +20,24 @@ export class AppUserSessionService extends BaseService {
     return postgresWrapper.anyWhere('app_user_session', null, 'app_user_id=$1', [appUserId]);
   }
 
+
   // FIXME: В настройки параметры
-  public async createSession (appUserId: number) {
+  public async saveUserSessionAndCreateJwt (sessionUser: SessionUser) {
+    // Создаем в БД новую запись о сессии
+    const sesionToken = Guid.newGuid();
     const result = new AppUserSession();
-    result.appUserId = appUserId;
-    result.userSessionToken = Guid.newGuid();
+    result.appUserId = sessionUser.appUserId;
+    result.userSessionToken = sesionToken;
     result.userSessionCreatedAt = new Date(Date.now()).toUTCString();
     result.userSessionExpiredAt = new Date(Date.now() + AppConfig.authConfig.JWT.refresh.options.expiresIn * 1000).toUTCString();
-    return this.save(result);
+    await this.save(result);
+
+    const newAccessToken = JWTHelper.createAndSignJwt(sessionUser, sesionToken);
+    return newAccessToken;
   }
 
-
   // FIXME: А тут не надо изменять userSessionToken ?
+  // FIXME:  Надо! В случае, если access-токен становится не валидным, клиент отправляет refresh-токен, в ответ на который сервер предоставляет два обновленных токена.
   public async refreshSession (existsSession: AppUserSession) {
     existsSession.userSessionUpdatedAt = new Date(Date.now()).toUTCString();
     existsSession.userSessionExpiredAt = new Date(Date.now() + AppConfig.authConfig.JWT.refresh.options.expiresIn * 1000).toUTCString();
@@ -46,8 +54,8 @@ export class AppUserSessionService extends BaseService {
   }
 
   public async deleteAllByUser (appUserId: number) {
-    const delWhere = 'user_session_token=$1';
-    return postgresWrapper.delete('app_user_id', delWhere, [appUserId]);
+    const delWhere = 'app_user_id=$1';
+    return postgresWrapper.delete('app_user_session', delWhere, [appUserId]);
   }
 
   public async lockSession (token: string) {

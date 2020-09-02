@@ -1,11 +1,11 @@
 import { JsonController, Post, BodyParam, Req, Res, Get, Param, UseBefore } from 'routing-controllers';
 import { Request, Response } from 'express';
 import { BaseController } from '../BaseController';
-import { serviceRegistry } from '@/ServiceRegistry';
+import { ServiceRegistry } from '@/ServiceRegistry';
 import { RegistrationStatus, RegistrationResult } from '@/services/security/registration/RegistrationResult';
 import { RegistrationService } from '@/services/security/registration/RegistrationService';
-import { authorized, temporaryAuthorized } from '@/middleware/SecurityMiddlewares';
-import { SecurityControllerHelper } from './SecurityControllerHelper';
+import { temporaryAuthorized } from '@/middleware/SecurityMiddlewares';
+import { SecurityHelper } from './SecurityHelper';
 
 @JsonController('/user')
 export class RegistrationController extends BaseController {
@@ -17,20 +17,19 @@ export class RegistrationController extends BaseController {
         @Req() request: Request,
         @Res() response: Response) {
 
+        // чистим куку с токеном
+        SecurityHelper.clearJWTCookie(response);
+
         try {
 
-            // Устанавливаем в сесии анонима и чистим куку с токеном
-            SecurityControllerHelper.setSessionUserAnonymous(request, response);
-
-            const registrationResult = await serviceRegistry.getService(RegistrationService).registerUser(login, password, request.body.unlinkedSocialUser);
+            const registrationResult = await ServiceRegistry.instance.getService(RegistrationService).registerUser(login, password, request.body.unlinkedSocialUser);
 
             if (registrationResult.registrationStatus === RegistrationStatus.OK) {
-                SecurityControllerHelper.setSessiontUser(registrationResult.sessionUser, request);
-                SecurityControllerHelper.setJWTCookie(response, registrationResult.newAccessToken);
+                SecurityHelper.setJWTCookie(response, registrationResult.newAccessToken);
             }
 
             if (registrationResult.registrationStatus === RegistrationStatus.RequereConfirmBySmsCode) {
-                SecurityControllerHelper.setSessiontUser(registrationResult.sessionUser, request);
+                SecurityHelper.setJWTCookie(response, registrationResult.newAccessToken);
                 delete registrationResult.sessionUser;
             }
 
@@ -51,13 +50,13 @@ export class RegistrationController extends BaseController {
         @Req() request: Request,
         @Res() response: Response) {
 
-        SecurityControllerHelper.setSessionUserAnonymous(request, response);
+        SecurityHelper.clearJWTCookie(response);
+
         try {
-            const result = await serviceRegistry.getService(RegistrationService).confirmRegistrationByEmail(token);
+            const result = await ServiceRegistry.instance.getService(RegistrationService).confirmRegistrationByEmail(token);
 
             if (result.registrationStatus === RegistrationStatus.OK) {
-                SecurityControllerHelper.setSessiontUser(result.sessionUser, request);
-                SecurityControllerHelper.setJWTCookie(response, result.newAccessToken);
+                SecurityHelper.setJWTCookie(response, result.newAccessToken);
             }
 
             delete result.newAccessToken;
@@ -78,12 +77,11 @@ export class RegistrationController extends BaseController {
         @Res() response: Response) {
 
         try {
-            const sessionUser = SecurityControllerHelper.getSessionUser(request);
-            const result = await serviceRegistry.getService(RegistrationService).confirmRegistrationByCode(code, sessionUser.appUserId);
+            const sessionUser = SecurityHelper.getSessionUserFromToken(request);
+            const result = await ServiceRegistry.instance.getService(RegistrationService).confirmRegistrationByCode(code, sessionUser.appUserId);
 
             if (result.registrationStatus === RegistrationStatus.OK) {
-                SecurityControllerHelper.setSessiontUser(result.sessionUser, request);
-                SecurityControllerHelper.setJWTCookie(response, result.newAccessToken);
+                SecurityHelper.setJWTCookie(response, result.newAccessToken);
             }
 
             delete result.newAccessToken;

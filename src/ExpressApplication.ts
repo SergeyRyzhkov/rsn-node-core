@@ -10,8 +10,7 @@ import { errorMiddleware } from './middleware/ErrorMiddleware';
 import { logger } from './utils/Logger';
 import { BaseController } from './controllers/BaseController';
 import helmet from 'helmet';
-import session from 'express-session';
-import { verifyAndUpdateAccessToken } from './middleware/SecurityMiddlewares';
+import { verifyOrUpdateAccessToken } from './middleware/SecurityMiddlewares';
 import cookieParser from 'cookie-parser';
 
 // FIXME: Было бы удобно еще регистрировать массив сервисов
@@ -88,27 +87,13 @@ export class ExpressApplication {
       ));
     }
 
-    // Для работы с сессией
-    // FIXME: В настройки все
-    const sessionOptions = {
-      secret: 'keyboard cat',
-      resave: true,
-      saveUninitialized: false,
-      cookie: {
-        secure: this.app.get('env') === 'production',
-        sameSite: true,
-        maxAge: AppConfig.authConfig.JWT.refresh.options.expiresIn * 1000
-      }
-    }
-    this.app.use(session(sessionOptions));
-
     this.app.use(headerMiddleware());
 
     if (!!AppConfig.authConfig) {
-      //  serviceRegistry.getService(PassportProviders).initialize();
+      //  ServiceRegistry.instance.getService(PassportProviders).initialize();
       // this.app.use(passport.initialize());
 
-      this.app.use(verifyAndUpdateAccessToken());
+      this.app.use(verifyOrUpdateAccessToken());
     }
 
     useExpressServer(this.app, {

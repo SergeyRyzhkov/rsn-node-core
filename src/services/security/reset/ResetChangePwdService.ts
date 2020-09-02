@@ -1,4 +1,4 @@
-import { serviceRegistry } from '@/ServiceRegistry';
+import { ServiceRegistry } from '@/ServiceRegistry';
 import { AppUserService } from '../user/AppUserService';
 import { ChangePasswordStatus, ChangePwdResult } from '@/services/security/reset/ChangePwdResult';
 import { AuthResult, LogonStatus } from '../auth/AuthResult';
@@ -13,19 +13,19 @@ export class ResetChangePwdService extends BaseService {
     // Запрос на восстановление пароля
     public async sendResetPasswordMessage (login: string) {
         // Ищем пользователя по мылу
-        const appUser = await serviceRegistry.getService(AppUserService).getByLogin(login);
+        const appUser = await ServiceRegistry.instance.getService(AppUserService).getByLogin(login);
         if (appUser) {
             //        const code = await this.twoFactorStrategy.sendResetPasswordMessage(appUser);
             appUser.appUserResetPwdDate = new Date(Date.now()).toUTCString();
             // appUser.appUserResetPwd = code;
-            await serviceRegistry.getService(AppUserService).save(appUser);
+            await ServiceRegistry.instance.getService(AppUserService).save(appUser);
         }
         return appUser;
     }
 
     // Проверка кода (токена) на восстановление
     public async checkResetPasswordCode (code: string) {
-        const appUser = await serviceRegistry.getService(AppUserService).getByResetPasswordToken(code);
+        const appUser = await ServiceRegistry.instance.getService(AppUserService).getByResetPasswordToken(code);
         if (!appUser) {
             return null;
         }
@@ -37,7 +37,7 @@ export class ResetChangePwdService extends BaseService {
 
         appUser.appUserResetPwd = null;
         appUser.appUserResetPwdDate = null;
-        return await serviceRegistry.getService(AppUserService).save(appUser);
+        return await ServiceRegistry.instance.getService(AppUserService).save(appUser);
     }
 
     // Смена пароля
@@ -66,7 +66,7 @@ export class ResetChangePwdService extends BaseService {
 
         // Пробуем авторизовать, если это не сброс пароля был через 2FA (sessionUser.reset) далее в verifyDone
         if (сhangePasswordResult.status === ChangePasswordStatus.Unknown && !sessionUser.reset) {
-            await serviceRegistry.getService(AuthService).loginByPassword(sessionUser.appUserName, oldPassword, null);
+            await ServiceRegistry.instance.getService(AuthService).loginByPassword(sessionUser.appUserName, oldPassword, null);
         }
 
         //  (sessionUser.reset) - был сброс пароля через 2FA - прсото меняем пароль
@@ -84,7 +84,7 @@ export class ResetChangePwdService extends BaseService {
         const appUser = new AppUser();
         appUser.appUserId = sessionUser.appUserId;
         //  appUser.appUserPwdHash = bcrypt.hashSync(newPassword, AuthService.bcryptSaltRounds);
-        serviceRegistry.getService(AppUserService).save(appUser);
+        ServiceRegistry.instance.getService(AppUserService).save(appUser);
     }
 
 }
