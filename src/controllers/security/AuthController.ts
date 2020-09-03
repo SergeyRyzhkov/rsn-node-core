@@ -68,7 +68,12 @@ export class AuthController extends BaseController {
 
     try {
       const sessionUser = SecurityHelper.getSessionUserFromToken(request);
-      const result = await ServiceRegistry.instance.getService(AuthService).confirmLoginByCode(code, sessionUser);
+      const result = await ServiceRegistry.instance.getService(AuthService).confirmLoginByCode(code, sessionUser.appUserId);
+
+      if (result.logonStatus === LogonStatus.OK) {
+        SecurityHelper.setJWTCookie(response, result.newAccessToken);
+      }
+
       delete result.newAccessToken;
 
       return this.createSuccessResponse(result, response);

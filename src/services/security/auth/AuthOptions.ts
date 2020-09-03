@@ -19,7 +19,9 @@ export class AuthOptions {
 
     public authOkMessage = 'Вход выполнен успешно'
 
-    public requireSmsConfirmationMessage = 'Подтвердитее регистрацию. Введите SMS код'
+    public requireSmsConfirmationMessage = 'Введите SMS код'
 
     public invalidConfirmationCodeMessage = 'Неверный код подтверждения или истек срок действия';
+
+    public requireRegistrationConfirmationMessage = 'Регистрация не подтверждена';
 }

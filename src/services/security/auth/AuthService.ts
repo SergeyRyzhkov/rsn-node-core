@@ -49,9 +49,15 @@ export class AuthService extends BaseService {
       // Проверяем пароль
       if (bcrypt.compareSync(password, user.appUserPwdHash)) {
         // Пароль верный (и не вывалилсь в exception)
+
         // Проверим на блокировку
         if (user.appUserBlockedInd === 1) {
           return logonResult.makeBlockedResult(this.options.userBlockedMessage);
+        }
+
+        // Проверим подтверждение регистрации
+        if (user.appUserRegVerifiedInd !== 1) {
+          return logonResult.makeRegistrationNotConfirmed(this.options.requireRegistrationConfirmationMessage);
         }
 
         // Если на клиенте был авторизованный профиль соц.сети - линкуем
@@ -86,6 +92,7 @@ export class AuthService extends BaseService {
         }
 
         return logonResult.makeOKResult(sessionUser, this.options.authOkMessage);
+
       } else {
         return logonResult.makeFailedResult(this.options.failedMessage);
       }
@@ -179,9 +186,9 @@ export class AuthService extends BaseService {
   }
 
 
-  public async confirmLoginByCode (code: number, sessionUser: SessionUser) {
+  public async confirmLoginByCode (code: number, appUserId: number) {
     const result: AuthResult = new AuthResult();
-    const user = await this.twoFactorVerifier.verifyByCode(code, sessionUser.appUserId);
+    const user = await this.twoFactorVerifier.verifyByCode(code, appUserId);
 
     try {
       if (!!user) {
@@ -191,7 +198,9 @@ export class AuthService extends BaseService {
         user.appUserSmsCode = null;
         await ServiceRegistry.instance.getService(AppUserService).save(user);
 
+        // Все нормально 
         const sessionUser = ServiceRegistry.instance.getService(AppUserService).convertAppUserToSessionUser(user);
+        result.newAccessToken = await ServiceRegistry.instance.getService(AppUserSessionService).saveUserSessionAndCreateJwt(sessionUser);
         result.makeOKResult(sessionUser, this.options.authOkMessage);
       } else {
         result.makeFailedResult(this.options.invalidConfirmationCodeMessage);
@@ -212,7 +221,8 @@ export class AuthService extends BaseService {
     return ServiceRegistry.instance.getService(AppUserSessionService).deleteAllByUser(appUserId)
   }
 
-  // Используется в мидлваре при каждом запросе для проверки или обновления токена
+
+  // Используется в мидлваре при каждом запросе для проверки и\или обновления токена
   public async verifyUpdateAccessToken (accessToken: string) {
     if (!accessToken) {
       throw new InvalidTokenException('Invalid access token');
@@ -250,8 +260,8 @@ export class AuthService extends BaseService {
           throw new UserSessionExpiredException('Registration is not verified');
         }
 
-        // Все хорошо - увеличиваем дату окончания сессии
-        ServiceRegistry.instance.getService(AppUserSessionService).refreshSession(session);
+        // Все хорошо - увеличиваем дату окончания сессии и меняем id сессии (рефреш токен)
+        await ServiceRegistry.instance.getService(AppUserSessionService).refreshSession(session);
         return JWTHelper.createAndSignJwt(tokenUser, session.userSessionToken);
       }
 

@@ -3,7 +3,6 @@ import { RegistrationResult } from '@/services/security/registration/Registratio
 import { ServiceRegistry } from '@/ServiceRegistry';
 import { AppUserService } from '../user/AppUserService';
 import { AppUser } from '@/models/security/AppUser';
-import { AuthService } from '../auth/AuthService';
 import { logger } from '@/utils/Logger';
 import bcrypt from 'bcrypt';
 import { RegistrationOptions } from './RegistrationOptions';
@@ -105,8 +104,8 @@ export class RegistrationService extends BaseService {
         return this.onConfirmRegistration(user);
     }
 
-    public async confirmRegistrationByCode (code: number, userId: number) {
-        const user = await this.twoFactorVerifier.verifyByCode(code, userId);
+    public async confirmRegistrationByCode (code: number, appUserId: number) {
+        const user = await this.twoFactorVerifier.verifyByCode(code, appUserId);
         return this.onConfirmRegistration(user);
     }
 
@@ -136,6 +135,7 @@ export class RegistrationService extends BaseService {
         return await ServiceRegistry.instance.getService(AppUserService).save(user);
     }
 
+
     private async onConfirmRegistration (verifiedUser: AppUser) {
         const registrationResult: RegistrationResult = new RegistrationResult();
 
@@ -145,7 +145,10 @@ export class RegistrationService extends BaseService {
                 verifiedUser.appUserRegToken = null;
                 verifiedUser.appUserSmsCode = null;
                 await ServiceRegistry.instance.getService(AppUserService).save(verifiedUser);
+
+                // Все нормально 
                 const sessionUser = ServiceRegistry.instance.getService(AppUserService).convertAppUserToSessionUser(verifiedUser);
+                registrationResult.newAccessToken = await ServiceRegistry.instance.getService(AppUserSessionService).saveUserSessionAndCreateJwt(sessionUser);
                 registrationResult.makeOK(sessionUser, this.options.registrationCompliteMessage);
             } else {
                 registrationResult.makeInvalid(this.options.invalidConfirmationCodeMessage);

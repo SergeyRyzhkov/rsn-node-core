@@ -12,7 +12,8 @@ export enum LogonStatus {
   Blocked,
   Error,
   Unknown,
-  RequereConfirmBySmsCode
+  RequereConfirmBySmsCode,
+  RegistrationNotConfirmed
 }
 
 export class AuthResult {
@@ -60,6 +61,14 @@ export class AuthResult {
     this.message = message;
     return this;
   }
+
+  public makeRegistrationNotConfirmed (message: string) {
+    this.logonStatus = LogonStatus.RegistrationNotConfirmed;
+    this.sessionUser = SessionUser.anonymousUser;
+    this.message = message;
+    return this;
+  }
+
 
   public makeErrorResult (exception: Exception) {
     this.logonStatus = LogonStatus.Error;

@@ -33,19 +33,17 @@ export class JWTHelper {
     }
   }
 
-  public static getTokenUserId (token: string): number {
-    const payload = jwt.decode(token, { complete: false, json: true }) as any;
-    if (payload && payload.jti) {
-      const { appUserId } = payload;
-      return appUserId;
-    }
-    return 0;
-  }
 
   public static getTokenUser (token: string): SessionUser {
+    let sessionUser: SessionUser = SessionUser.anonymousUser;
+
     const payload = jwt.decode(token, { complete: false, json: true });
-    this.deleteClaimProperties(payload);
-    return plainToClass(SessionUser, payload)
+    if (!!payload) {
+      this.deleteClaimProperties(payload);
+      sessionUser = plainToClass(SessionUser, payload)
+    }
+
+    return sessionUser;
   }
 
   // FIXME: Wthat is the options // mutatePayload ?

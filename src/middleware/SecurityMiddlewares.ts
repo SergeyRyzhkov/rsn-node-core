@@ -52,7 +52,7 @@ export const permit = (...allowedRoles: number[]) => {
   }
 }
 
-export const verifyOrUpdateAccessToken = () => {
+export const verifyUpdateAccessToken = () => {
   return async (req: Request, res: Response, next: NextFunction) => {
 
     const jwt = SecurityHelper.getAccessToken(req);

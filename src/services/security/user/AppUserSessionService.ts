@@ -22,7 +22,11 @@ export class AppUserSessionService extends BaseService {
 
 
   // FIXME: В настройки параметры
+  // FIXME: Учесть возможность сессий с разных устройств (ip)
   public async saveUserSessionAndCreateJwt (sessionUser: SessionUser) {
+    // Почитсим старые сессии
+    await this.deleteAllByUser(sessionUser.appUserId);
+
     // Создаем в БД новую запись о сессии
     const sesionToken = Guid.newGuid();
     const result = new AppUserSession();
@@ -36,9 +40,8 @@ export class AppUserSessionService extends BaseService {
     return newAccessToken;
   }
 
-  // FIXME: А тут не надо изменять userSessionToken ?
-  // FIXME:  Надо! В случае, если access-токен становится не валидным, клиент отправляет refresh-токен, в ответ на который сервер предоставляет два обновленных токена.
   public async refreshSession (existsSession: AppUserSession) {
+    existsSession.userSessionToken = Guid.newGuid();
     existsSession.userSessionUpdatedAt = new Date(Date.now()).toUTCString();
     existsSession.userSessionExpiredAt = new Date(Date.now() + AppConfig.authConfig.JWT.refresh.options.expiresIn * 1000).toUTCString();
     return this.save(existsSession);

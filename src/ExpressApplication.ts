@@ -10,7 +10,7 @@ import { errorMiddleware } from './middleware/ErrorMiddleware';
 import { logger } from './utils/Logger';
 import { BaseController } from './controllers/BaseController';
 import helmet from 'helmet';
-import { verifyOrUpdateAccessToken } from './middleware/SecurityMiddlewares';
+import { verifyUpdateAccessToken } from './middleware/SecurityMiddlewares';
 import cookieParser from 'cookie-parser';
 
 // FIXME: Было бы удобно еще регистрировать массив сервисов
@@ -93,7 +93,7 @@ export class ExpressApplication {
       //  ServiceRegistry.instance.getService(PassportProviders).initialize();
       // this.app.use(passport.initialize());
 
-      this.app.use(verifyOrUpdateAccessToken());
+      this.app.use(verifyUpdateAccessToken());
     }
 
     useExpressServer(this.app, {
