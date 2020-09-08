@@ -10,33 +10,24 @@ import { ServiceRegistry } from './ServiceRegistry';
 import { AuthService } from './services/security/auth/AuthService';
 import { RegistrationService } from './services/security/registration/RegistrationService';
 import { ResetChangePwdService } from './services/security/reset/ResetChangePwdService';
-import { PassportProviders } from './services/security/PassportProviders';
 import { AppUserSessionService } from './services/security/user/AppUserSessionService';
 import { AppUserService } from './services/security/user/AppUserService';
+import { ConfigManager } from './ConfigManager';
+import { ExpressConfig } from './ExpressConfig';
+import { DatabaseConfig } from './DatabaseConfig';
+import { SmtpOptions } from './services/mail/SmtpOptions';
+import { SecurityConfig } from './services/security/SecurityConfig';
 
-export class ExampleApp {
 
-    public async start () {
-        const controllers = [AppController, AuthController, RegistrationController, ResetChangePwdController];
-        const entities = [AppUser, AppUserSession, AppUserSocialNetProfile];
+export class TestApp {
 
-        const app: ExpressApplication = new ExpressApplication();
-
-        ServiceRegistry.instance.register(AppUserService).
-            register(AppUserSessionService).
-            register(AuthService).
-            register(RegistrationService).
-            register(ResetChangePwdService).
-            register(PassportProviders);
-
-        app.addAppControllers(controllers).addTypeOrmEntityMetadata(entities);
-
-        await app.start();
-
-    }
+    // public async start () {
+    //     const app: ExpressApplication = new ExpressApplication();
+    //     await app.start();
+    // }
 }
 
-(async () => {
-    new ExampleApp().start();
-}
-)()
+// (async () => {
+//     new TestApp().start();
+// }
+// )()

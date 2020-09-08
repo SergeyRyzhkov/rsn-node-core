@@ -1,48 +1,48 @@
-
-
 import { Request, Response } from 'express';
-import { AppConfig } from '@/utils/Config';
 import { SessionUser } from '@/models/security/SessionUser';
 import { AuthService } from '@/services/security/auth/AuthService';
 import { ServiceRegistry } from '@/ServiceRegistry';
 import { JWTHelper } from '@/services/security/JWTHelper';
+import { ConfigManager } from '@/ConfigManager';
+import { SecurityConfig } from '@/services/security/SecurityConfig';
 
 export class SecurityHelper {
 
-    public static setJWTCookie (res: Response, accessToken: string, maxAgeInSeconds = 20 * 24 * 60 * 60) {
+    private static securityConfig = ConfigManager.instance.getOptions(SecurityConfig);
+
+    public static setJWTCookie (res: Response, accessToken: string) {
         // FIXME: В настройки
         const cookieOptions = {
-            expires: new Date(Date.now() + maxAgeInSeconds * 1000),
+            expires: new Date(Date.now() + this.securityConfig.refreshTokenAgeInSeconds * 1000),
             httpOnly: true,
-            // hostOnly: false,
-            // sameSite: true, 
             secure: res.app.get('env') === 'production'
         }
 
         if (!accessToken) {
-            const rrr = ''
+            this.clearJWTCookie(res);
+        } else {
+            res.cookie(this.securityConfig.jwtCookieName, accessToken, cookieOptions);
         }
-        res.cookie(AppConfig.authConfig.cookieName, accessToken, cookieOptions);
     }
 
     public static clearJWTCookie (res: Response) {
-        res.clearCookie(AppConfig.authConfig.cookieName);
+        res.clearCookie(this.securityConfig.jwtCookieName);
     }
 
 
     public static getAccessToken (req: Request) {
-        return req.cookies[AppConfig.authConfig.cookieName];
+        return req.cookies[this.securityConfig.jwtCookieName];
     }
 
     // Получить ререшь токен (он также д.б. в базе), который как ключ в JWT
     public static getSessionToken (req: Request) {
-        const token = SecurityHelper.getAccessToken(req);
+        const token = this.getAccessToken(req);
         return JWTHelper.getJwtId(token);
     }
 
     public static getSessionUserFromToken (req: Request): SessionUser {
         let sessionUser = SessionUser.anonymousUser
-        const token = SecurityHelper.getAccessToken(req);
+        const token = this.getAccessToken(req);
         if (!!token) {
             sessionUser = JWTHelper.getTokenUser(token);
         }
@@ -50,11 +50,11 @@ export class SecurityHelper {
     }
 
     public static isUserAuthorized (req: Request) {
-        return ServiceRegistry.instance.getService(AuthService).isUserAuthorized(SecurityHelper.getSessionUserFromToken(req));
+        return ServiceRegistry.instance.getService(AuthService).isUserAuthorized(this.getSessionUserFromToken(req));
     }
 
     // Юзверь залогинился, но еще не подтвердил регистрацию кодом или логин кодом
     public static isUserTemporaryAuthorized (req: Request) {
-        return ServiceRegistry.instance.getService(AuthService).isUserTemporaryAuthorized(SecurityHelper.getSessionUserFromToken(req));
+        return ServiceRegistry.instance.getService(AuthService).isUserTemporaryAuthorized(this.getSessionUserFromToken(req));
     }
 }

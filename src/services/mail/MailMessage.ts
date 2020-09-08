@@ -1,6 +1,6 @@
 import { Attachment } from 'nodemailer/lib/mailer';
 
-export interface IMailMessage {
+export interface MailMessage {
   from: string;
   to: string;
   subject: string;

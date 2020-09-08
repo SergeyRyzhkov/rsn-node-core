@@ -3,30 +3,50 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import { useExpressServer } from 'routing-controllers';
 import noCache from 'nocache';
-import { AppConfig } from './utils/Config';
-import { TypeOrmManager } from './TypeOrmManager';
-import { headerMiddleware } from './middleware/HeaderMiddleware';
+import { TypeOrmManager } from './utils/TypeOrmManager';
 import { errorMiddleware } from './middleware/ErrorMiddleware';
 import { logger } from './utils/Logger';
 import { BaseController } from './controllers/BaseController';
 import helmet from 'helmet';
 import { verifyUpdateAccessToken } from './middleware/SecurityMiddlewares';
 import cookieParser from 'cookie-parser';
+import xss from 'xss-clean';
+// import rateLimit from 'express-rate-limit';
+import hpp from 'hpp';
+import { ExpressConfig } from './ExpressConfig';
+import { ConfigManager } from './ConfigManager';
+import { DatabaseConfig } from './DatabaseConfig';
+import { ServiceRegistry } from './ServiceRegistry';
+import { AppController } from './controllers/AppController';
+import { AuthController } from './controllers/security/AuthController';
+import { RegistrationController } from './controllers/security/RegistrationController';
+import { ResetChangePwdController } from './controllers/security/ResetChangePwdController';
+import { AppUserService } from './services/security/user/AppUserService';
+import { AppUserSessionService } from './services/security/user/AppUserSessionService';
+import { AuthService } from './services/security/auth/AuthService';
+import { RegistrationService } from './services/security/registration/RegistrationService';
+import { ResetChangePwdService } from './services/security/reset/ResetChangePwdService';
+import { AppUser } from './models/security/AppUser';
+import { AppUserSession } from './models/security/AppUserSession';
+import { AppUserSocialNetProfile } from './models/security/AppUserSocialNetProfile';
+import { SecurityConfig } from './services/security/SecurityConfig';
 
 // FIXME: Было бы удобно еще регистрировать массив сервисов
 
 export class ExpressApplication {
+  private config: ExpressConfig;
   private app = express();
 
   private appControllers: typeof BaseController[] = [];
   private ormEntityModelMetadata: any[] = [];
 
-  public getExpressApp () {
-    return this.app;
+  constructor(config?: ExpressConfig) {
+    this.config = config || ConfigManager.instance.getOptions(ExpressConfig);
+    this.config = this.config || new ExpressConfig();
   }
 
-  public getAppConfig () {
-    return AppConfig;
+  public getExpressApp () {
+    return this.app;
   }
 
   public addAppControllers (controllers: typeof BaseController[]) {
@@ -43,8 +63,8 @@ export class ExpressApplication {
     try {
       await this.initialize();
 
-      this.app.listen(AppConfig.serverConfig.port, () => {
-        logger.info(`Application has started in ${this.app.get('env')} mode and listen at port ${AppConfig.serverConfig.port}`);
+      const server = this.app.listen(this.config.port, () => {
+        logger.info(`Application has started in ${this.app.get('env')} mode and listen at port ${this.config.port}`);
         if (process.send) {
           process.send('ready');
           logger.info('Process.send ready');
@@ -52,6 +72,11 @@ export class ExpressApplication {
       });
 
       process.on('warning', e => logger.error(e.stack));
+
+      process.on('unhandledRejection', (err) => {
+        logger.error(err);
+        server.close(() => process.exit(1))
+      })
 
       return this.app;
     } catch (exc) {
@@ -63,41 +88,56 @@ export class ExpressApplication {
   }
 
   private async initialize () {
-    if (!!AppConfig.dbConfig) {
-      await TypeOrmManager.initConnection(this.ormEntityModelMetadata);
-    }
 
-    const limit = AppConfig.serverConfig.bodyParserLimit || '50mb'
+    const limit = this.config.bodyParserLimit || '50mb';
 
     this.app.set('trust proxy', 1);
+    // Prevent XSS attacks
+    this.app.use(xss());
+    // Prevent http param pollution
+    this.app.use(hpp());
     this.app.use(helmet());
     this.app.use(noCache());
     this.app.use(cookieParser())
     this.app.use(bodyParser.urlencoded({ limit, extended: true }));
     this.app.use(bodyParser.json({ limit }));
 
+    // FIXME: Использовать через конфиг
+    // Rate limiting
+    // const limiter = rateLimit({
+    //   windowMs: 10 * 60 * 1000, // 10 mins
+    //   max: 100 // 100 request per 10 mins
+    // })
 
-    // FIXME: Параметры в конфиг
-    if (AppConfig.serverConfig.useCors) {
+    // app.use(limiter)
+
+    if (this.config.useCors) {
       this.app.use(cors(
-        {
-          credentials: true,
-          origin: true
-        }
+        this.config.corsOptions
       ));
     }
 
-    this.app.use(headerMiddleware());
-
-    if (!!AppConfig.authConfig) {
-      //  ServiceRegistry.instance.getService(PassportProviders).initialize();
-      // this.app.use(passport.initialize());
-
+    if (ConfigManager.instance.exists(SecurityConfig)) {
       this.app.use(verifyUpdateAccessToken());
+
+      ServiceRegistry.instance.register(AppUserService).
+        register(AppUserSessionService).
+        register(AuthService).
+        register(RegistrationService).
+        register(ResetChangePwdService);
+
+      // FIXME: Для них по хорошему надо также сделать Registry, а не сувать в App
+      const entities = [AppUser, AppUserSession, AppUserSocialNetProfile];
+      const controllers = [AppController, AuthController, RegistrationController, ResetChangePwdController];
+      this.addAppControllers(controllers).addTypeOrmEntityMetadata(entities);
+    }
+
+    if (ConfigManager.instance.exists(DatabaseConfig)) {
+      await TypeOrmManager.initConnection(this.ormEntityModelMetadata);
     }
 
     useExpressServer(this.app, {
-      routePrefix: AppConfig.serverConfig.restApiEndPoint,
+      routePrefix: this.config.restApiBaseUrl,
       controllers: this.appControllers,
       defaultErrorHandler: false
     });
@@ -109,11 +149,3 @@ export class ExpressApplication {
 }
 
 
-// var app = express()
-// app.set('trust proxy', 1) // trust first proxy
-// app.use(session({
-//   secret: 'keyboard cat',
-//   resave: false,
-//   saveUninitialized: true,
-//   cookie: { secure: true }
-// }))

@@ -1,14 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
-import { AppConfig } from '@/utils/Config';
 
 export const headerMiddleware = () => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    res.header('Access-Control-Allow-Methods', 'OPTIONS,GET,HEAD,PATCH,POST,DELETE,PUT');
-    if (AppConfig.authConfig) {
-      // res.header('Access-Control-Allow-Headers', 'Origin, Content-Type, X-Requested-With, Accept, Authorization,' + AppConfig.authConfig.jwtHeaderName);
-      // res.header('Access-Control-Expose-Headers', AppConfig.authConfig.jwtHeaderName);
-      res.header('Access-Control-Allow-Headers', 'Origin, Content-Type, X-Requested-With, Accept, Authorization');
-    }
+    // res.header('Access-Control-Allow-Methods', 'OPTIONS,GET,HEAD,PATCH,POST,DELETE,PUT');
+    // if (AppConfig.authConfig) {
+    //   // res.header('Access-Control-Allow-Headers', 'Origin, Content-Type, X-Requested-With, Accept, Authorization,' + AppConfig.authConfig.jwtHeaderName);
+    //   // res.header('Access-Control-Expose-Headers', AppConfig.authConfig.jwtHeaderName);
+    //   res.header('Access-Control-Allow-Headers', 'Origin, Content-Type, X-Requested-With, Accept, Authorization');
+    // }
     next();
   }
 }

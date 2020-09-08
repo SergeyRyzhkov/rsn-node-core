@@ -1,6 +1,6 @@
 import { BaseService } from '../../BaseService';
-import { TypeOrmManager } from '@/TypeOrmManager';
-import { postgresWrapper } from '@/PostgresWrapper';
+import { TypeOrmManager } from '@/utils/TypeOrmManager';
+import { postgresWrapper } from '@/utils/PostgresWrapper';
 import { AppUserSocialNetProfile } from '@/models/security/AppUserSocialNetProfile';
 import { plainToClass } from 'class-transformer';
 import { AppUser } from '../../../models/security/AppUser';

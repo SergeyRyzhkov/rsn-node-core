@@ -1,7 +1,11 @@
-import { AppConfig } from '@/utils/Config';
+import { ConfigManager, ModuleOptions } from '@/ConfigManager';
+import { ExpressConfig } from '@/ExpressConfig';
+import { Exclude } from 'class-transformer';
 
-export class RegistrationOptions {
+export class RegistrationOptions extends ModuleOptions {
 
+    @Exclude()
+    private appConfig = ConfigManager.instance.getOptions(ExpressConfig);
 
     // Для генерации хэша пароля 
     public bcryptSaltRounds = 10;
@@ -16,11 +20,12 @@ export class RegistrationOptions {
     public isRequireConfirmationBySms = true;
 
     // Путь (URL) для подтверждения регистрации (будет вставлен в почтовом сообщекнии)
-    public сonfirMailUrl = `${AppConfig.serverConfig.host}${AppConfig.serverConfig.restApiEndPoint}/user/registration/confirm/mail`;
+    public сonfirMailUrl = `${this.appConfig.host}${this.appConfig.restApiBaseUrl}/user/registration/confirm/mail`;
 
     // Заголовок в email подтверждения регистрации
     public сonfirmMailHeader = 'Подтверждение регистрации';
 
+    // FIXME: Надо подумаь насчет папки mail. Может это в настройках почты надо делать
     // Наименование шаблона (в папке mail) email подтверждения регистрации
     public сonfirmMailTemplate = 'reg_confirm';
 

@@ -9,7 +9,7 @@ const paths = {
   dist: path.resolve(__dirname, 'dist'),
   npm: path.resolve(__dirname, 'npm')
 };
-const entryFileName = path.join(paths.src, "ExampleApp.ts");
+const entryFileName = path.join(paths.src, "TestApp.ts");
 const outProductionBundleFileName = 'index.js';
 const outDevBundleFileName = 'index.dev.js';
 

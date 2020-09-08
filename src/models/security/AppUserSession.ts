@@ -34,15 +34,5 @@ export class AppUserSession {
     name: 'user_session_token'
   })
   public userSessionToken: string;
-
-  @Column('numeric', {
-    name: 'user_session_block_ind'
-  })
-  public userSessionBlockInd: number;
-
-
-  public appUserRegVerifiedInd: number;
-
-  public appUserRegDate: string;
 }
 

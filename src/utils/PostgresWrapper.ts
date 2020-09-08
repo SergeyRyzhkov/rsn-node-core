@@ -1,8 +1,10 @@
-import { AppConfig } from './utils/Config';
-import { IMain, IDatabase } from 'pg-promise';
+import { IMain, IDatabase, IEventContext } from 'pg-promise';
 import pgPromise from 'pg-promise';
-import { SortPagination } from './models/SortPagination';
+import { SortPagination } from '../models/SortPagination';
 import camelcaseKeys from 'camelcase-keys';
+import { ConfigManager } from '../ConfigManager';
+import { DatabaseConfig } from "../DatabaseConfig";
+import { logger } from './Logger';
 
 
 
@@ -69,23 +71,28 @@ enum TypeId {
   REGROLE = 4096
 }
 
+
+// FIXME: Логгирование ошибок
 class PostgresWrapper {
-  private postgrePromise: IDatabase<any>
+  private postgrePromise: IDatabase<any>;
+  private dbConfig = ConfigManager.instance.getOptionsAsPlain(DatabaseConfig);
 
   constructor() {
     const initOptions = {
-      ...AppConfig.dbConfig.pgOptions,
-      receive (data, result, e) {
+      ...this.dbConfig.pgOptions,
+      receive: (data, result) => {
         result.rows = camelcaseKeys(data);
+      },
+      error: (err: any) => {
+        logger.error(err);
       }
     };
 
     const pgp: IMain = pgPromise(initOptions);
     pgp.pg.types.setTypeParser(TypeId.INT8, parseInt);
     pgp.pg.types.setTypeParser(TypeId.NUMERIC, parseInt);
-    this.postgrePromise = pgp(AppConfig.dbConfig);
+    this.postgrePromise = pgp(this.dbConfig);
   }
-
 
   public async any (query: string): Promise<any[]> {
     return this.postgrePromise.any({

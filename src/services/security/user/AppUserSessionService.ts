@@ -1,14 +1,17 @@
 import { BaseService } from '../../BaseService';
 import { AppUserSession } from '@/models/security/AppUserSession';
-import { TypeOrmManager } from '@/TypeOrmManager';
-import { postgresWrapper } from '@/PostgresWrapper';
+import { TypeOrmManager } from '@/utils/TypeOrmManager';
+import { postgresWrapper } from '@/utils/PostgresWrapper';
 import { Guid } from '@/utils/Guid';
-import { AppConfig } from '@/utils/Config';
 import { plainToClass } from 'class-transformer';
 import { SessionUser } from '@/models/security/SessionUser';
 import { JWTHelper } from '../JWTHelper';
+import { ConfigManager } from '@/ConfigManager';
+import { SecurityConfig } from '../SecurityConfig';
 
 export class AppUserSessionService extends BaseService {
+
+  private securityConfig = ConfigManager.instance.getOptions(SecurityConfig);
 
   public async getByToken (token: string) {
     const dbResult = await postgresWrapper.oneOrNoneWhere('app_user_session', 'user_session_token=$1', [token]);
@@ -33,7 +36,7 @@ export class AppUserSessionService extends BaseService {
     result.appUserId = sessionUser.appUserId;
     result.userSessionToken = sesionToken;
     result.userSessionCreatedAt = new Date(Date.now()).toUTCString();
-    result.userSessionExpiredAt = new Date(Date.now() + AppConfig.authConfig.JWT.refresh.options.expiresIn * 1000).toUTCString();
+    result.userSessionExpiredAt = new Date(Date.now() + this.securityConfig.refreshTokenAgeInSeconds * 1000).toUTCString();
     await this.save(result);
 
     const newAccessToken = JWTHelper.createAndSignJwt(sessionUser, sesionToken);
@@ -43,7 +46,7 @@ export class AppUserSessionService extends BaseService {
   public async refreshSession (existsSession: AppUserSession) {
     existsSession.userSessionToken = Guid.newGuid();
     existsSession.userSessionUpdatedAt = new Date(Date.now()).toUTCString();
-    existsSession.userSessionExpiredAt = new Date(Date.now() + AppConfig.authConfig.JWT.refresh.options.expiresIn * 1000).toUTCString();
+    existsSession.userSessionExpiredAt = new Date(Date.now() + this.securityConfig.refreshTokenAgeInSeconds * 1000).toUTCString();
     return this.save(existsSession);
   }
 
@@ -51,10 +54,10 @@ export class AppUserSessionService extends BaseService {
     return TypeOrmManager.EntityManager.save(appUserSession);
   }
 
-  public async delete (token: string) {
-    const delWhere = 'user_session_token=$1';
-    return postgresWrapper.delete('app_user_session', delWhere, [token]);
-  }
+  // public async delete (token: string) {
+  //   const delWhere = 'user_session_token=$1';
+  //   return postgresWrapper.delete('app_user_session', delWhere, [token]);
+  // }
 
   public async deleteAllByUser (appUserId: number) {
     const delWhere = 'app_user_id=$1';
@@ -71,8 +74,7 @@ export class AppUserSessionService extends BaseService {
     return postgresWrapper.execNone(update, [appUserId]);
   }
 
-  // FIXME: привести к единому, чтобы не умножать и т.д.
   public isExpired (session: AppUserSession) {
-    return Date.now() - Date.parse(session.userSessionExpiredAt) > AppConfig.authConfig.JWT.refresh.options.expiresIn * 1000;
+    return Date.now() - Date.parse(session.userSessionExpiredAt) > this.securityConfig.refreshTokenAgeInSeconds * 1000;
   }
 }

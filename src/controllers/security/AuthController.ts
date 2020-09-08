@@ -91,10 +91,10 @@ export class AuthController extends BaseController {
     @Res() response: Response) {
 
     try {
-      const sessionToken = SecurityHelper.getSessionToken(request);
-      SecurityHelper.clearJWTCookie(response);
+      const userId = SecurityHelper.getSessionUserFromToken(request).appUserId
+      await ServiceRegistry.instance.getService(AuthService).logout(userId);
 
-      ServiceRegistry.instance.getService(AuthService).logout(sessionToken);
+      SecurityHelper.clearJWTCookie(response);
 
       return this.createSuccessResponse({}, response);
     } catch (err) {

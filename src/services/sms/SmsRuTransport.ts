@@ -1,7 +1,7 @@
-import { ISmsMessage } from './ISmsMessage';
+import { SmsMessage } from './SmsMessage';
 import { SmsTransport } from './SmsTransport';
 import { SmsResponse } from './SmsResponse';
-import { fetchWrapper } from '@/FetchWrapper';
+import { fetchWrapper } from '@/utils/FetchWrapper';
 
 export class SmsRuTransport extends SmsTransport {
 
@@ -13,7 +13,7 @@ export class SmsRuTransport extends SmsTransport {
     this.apiKey = apiKey;
   }
 
-  public async send (message: ISmsMessage): Promise<SmsResponse> {
+  public async send (message: SmsMessage): Promise<SmsResponse> {
     let params = `to=${message.toPhone}&msg=${message.message}`;
 
     if (!!message.from) {
@@ -21,7 +21,7 @@ export class SmsRuTransport extends SmsTransport {
     }
 
     const response = await this.doRequest('send', params);
-    const json = await response.data;
+    const json = response.data;
     const result = new SmsResponse();
 
     result.balance = json.balance;

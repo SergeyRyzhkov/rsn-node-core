@@ -16,12 +16,12 @@ export class ServiceRegistry {
 
   public register<T extends BaseService> (ctor: new (...args: any[]) => T, ...args: any[]) {
     const service = new ctor(...args);
-    this.servicesMap.set(ctor, service);
+    this.servicesMap.set(ctor.name, service);
     return this;
   }
 
   public getService<T extends BaseService> (ctor: new (...args: any[]) => T): T {
-    const instance = this.servicesMap.get(ctor);
+    const instance = this.servicesMap.get(ctor.name);
     return instance || this.defaultService;
   }
 }

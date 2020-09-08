@@ -1,5 +1,6 @@
 import { createConnection, EntityManager, getManager } from 'typeorm';
-import { AppConfig } from './utils/Config';
+import { ConfigManager } from '@/ConfigManager'
+import { DatabaseConfig } from '../DatabaseConfig';
 
 export class TypeOrmManager {
 
@@ -7,7 +8,8 @@ export class TypeOrmManager {
 
   public static async initConnection (entityList: any[]) {
     if (!this.connectionInit) {
-      const config = { ...AppConfig.dbConfig, entities: entityList };
+      const dbConfig = ConfigManager.instance.getOptionsAsPlain(DatabaseConfig);
+      const config = { ...dbConfig, entities: entityList };
       await createConnection(config);
       this.connectionInit = true;
     }

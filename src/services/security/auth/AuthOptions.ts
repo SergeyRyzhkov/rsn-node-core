@@ -1,4 +1,6 @@
-export class AuthOptions {
+import { ModuleOptions } from '@/ConfigManager';
+
+export class AuthOptions extends ModuleOptions {
 
     // Логином явялется номер телефона или почта?
     public isLoginByPhone = true;

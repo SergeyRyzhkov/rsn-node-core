@@ -1,36 +1,27 @@
-
 import jwt, { } from 'jsonwebtoken';
-import { AppConfig } from '@/utils/Config';
 import { plainToClass } from 'class-transformer';
 import { SessionUser } from '../../models/security/SessionUser';
+import { ConfigManager } from '@/ConfigManager';
+import { SecurityConfig } from './SecurityConfig';
 
 export class JWTHelper {
+
+  private static securityConfig = ConfigManager.instance.getOptions(SecurityConfig);
 
   public static createAndSignJwt (sessionUser: SessionUser, sessionId: string): string {
     const payload = { ...sessionUser };
     this.deleteClaimProperties(payload);
-    const jwtOptions = { ...AppConfig.authConfig.JWT.access.options, jwtid: sessionId };
-    return jwt.sign(payload, AppConfig.authConfig.JWT.access.secretKey, jwtOptions);
+    const jwtOptions = { ...this.securityConfig.jwtSignOptions, jwtid: sessionId };
+    return jwt.sign(payload, this.securityConfig.jwtSecretKey, jwtOptions);
   }
 
-  // public static extendAccessToken (oldToken: string): string {
-  //   const oldPayload = jwt.decode(oldToken, { complete: false, json: true }) as any;
-  //   const sessionId = oldPayload.jti;
-  //   this.deleteClaimProperties(oldPayload);
-  //   const jwtOptions = { ...AppConfig.authConfig.JWT.access.options, jwtid: sessionId };
-  //   return jwt.sign(oldPayload, AppConfig.authConfig.JWT.access.secretKey, jwtOptions);
-  // }
-
   public static verifyAccessToken (token: string) {
-    const jwtOptions = AppConfig.authConfig.JWT.access.options;
-    return jwt.verify(token, AppConfig.authConfig.JWT.access.secretKey, jwtOptions);
+    return jwt.verify(token, this.securityConfig.jwtSecretKey, this.securityConfig.jwtSignOptions);
   }
 
   public static getJwtId (token: string) {
     const payload = jwt.decode(token, { complete: false, json: true }) as any;
-    if (payload && payload.jti) {
-      return payload.jti;
-    }
+    return !!payload && !!payload.jti ? payload.jti : null;
   }
 
 
@@ -46,7 +37,6 @@ export class JWTHelper {
     return sessionUser;
   }
 
-  // FIXME: Wthat is the options // mutatePayload ?
   private static deleteClaimProperties (payload: any) {
     delete payload.exp;
     delete payload.jti;

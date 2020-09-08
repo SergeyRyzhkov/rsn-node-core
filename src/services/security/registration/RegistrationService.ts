@@ -7,20 +7,23 @@ import { logger } from '@/utils/Logger';
 import bcrypt from 'bcrypt';
 import { RegistrationOptions } from './RegistrationOptions';
 import { MailSender } from '@/services/mail/MailSender';
-import { AppConfig } from '@/utils/Config';
 import { Guid } from '@/utils/Guid';
 import { SessionUser } from '../../../models/security/SessionUser';
 import { TwoFactorVerifier } from '../TwoFactorVerifier';
 import { AppUserSessionService } from '../user/AppUserSessionService';
+import { ConfigManager } from '@/ConfigManager';
+import { SecurityConfig } from '../SecurityConfig';
+import { SmtpOptions } from '@/services/mail/SmtpOptions';
 
 export class RegistrationService extends BaseService {
     private options: RegistrationOptions;
-    private mailSender: MailSender = new MailSender(AppConfig.mail);
+    private mailSender: MailSender = new MailSender();
     private twoFactorVerifier: TwoFactorVerifier = new TwoFactorVerifier();
 
     constructor(options?: RegistrationOptions) {
         super();
-        this.options = !!options ? options : new RegistrationOptions();
+        this.options = options || ConfigManager.instance.getOptions(SecurityConfig)?.registrationOptions;
+        this.options = this.options || new RegistrationOptions();
     }
 
     public async registerUser (login: string, password: string, unlinkedSocialProfile: SessionUser): Promise<RegistrationResult> {
@@ -120,7 +123,7 @@ export class RegistrationService extends BaseService {
         }
 
         const message = {
-            from: AppConfig.mail.from,
+            from: ConfigManager.instance.getOptions(SmtpOptions).from,
             to: user.appUserMail,
             text: '',
             html: '',
