@@ -40,7 +40,7 @@
     "webpack-node-externals": "latest"
   },
   "dependencies": {
-    "bcrypt": "3.0.6",
+    "bcrypt": "5.0.0",
     "body-parser": "latest",
     "camelcase-keys": "latest",
     "class-transformer": "latest",
