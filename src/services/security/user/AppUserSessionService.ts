@@ -9,22 +9,16 @@ import { JWTHelper } from '../JWTHelper';
 import { ConfigManager } from '@/ConfigManager';
 import { SecurityConfig } from '../SecurityConfig';
 
+// TODO: Можно сделать абстрактный класс для хранения (и имплементации - мемори, редиска, база,...)
 export class AppUserSessionService extends BaseService {
 
   private securityConfig = ConfigManager.instance.getOptions(SecurityConfig);
 
   public async getByToken (token: string) {
     const dbResult = await postgresWrapper.oneOrNoneWhere('app_user_session', 'user_session_token=$1', [token]);
-    return plainToClass(AppUserSession, dbResult)
+    return !!dbResult ? plainToClass(AppUserSession, dbResult) : null;
   }
 
-
-  public async getByUser (appUserId: number) {
-    return postgresWrapper.anyWhere('app_user_session', null, 'app_user_id=$1', [appUserId]);
-  }
-
-
-  // FIXME: В настройки параметры
   // FIXME: Учесть возможность сессий с разных устройств (ip)
   public async saveUserSessionAndCreateJwt (sessionUser: SessionUser) {
     // Почитсим старые сессии
@@ -53,11 +47,6 @@ export class AppUserSessionService extends BaseService {
   public async save (appUserSession: AppUserSession) {
     return TypeOrmManager.EntityManager.save(appUserSession);
   }
-
-  // public async delete (token: string) {
-  //   const delWhere = 'user_session_token=$1';
-  //   return postgresWrapper.delete('app_user_session', delWhere, [token]);
-  // }
 
   public async deleteAllByUser (appUserId: number) {
     const delWhere = 'app_user_id=$1';

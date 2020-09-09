@@ -4,7 +4,7 @@ import { AuthResult, LogonStatus } from '@/services/security/auth/AuthResult';
 import { Param, Post, Req, Res, JsonController, Get, BodyParam, UseBefore } from 'routing-controllers';
 import { ServiceRegistry } from '@/ServiceRegistry';
 import { AuthService } from '@/services/security/auth/AuthService';
-import { temporaryAuthorized } from '@/middleware/SecurityMiddlewares';
+import { temporaryAuthorized, authorized } from '@/middleware/SecurityMiddlewares';
 import { SecurityHelper } from './SecurityHelper';
 import { SessionUser } from '@/models/security/SessionUser';
 
@@ -53,7 +53,7 @@ export class AuthController extends BaseController {
       return this.createSuccessResponse(logonResult, response);
     } catch (err) {
       const result = new AuthResult();
-      result.makeFailedResult();
+      result.makeFailed();
       return this.createSuccessResponse(result, response);
     }
   }
@@ -80,7 +80,7 @@ export class AuthController extends BaseController {
 
     } catch (err) {
       const result = new AuthResult();
-      result.makeFailedResult();
+      result.makeFailed();
       return this.createSuccessResponse(result, response);
     }
   }
@@ -91,7 +91,7 @@ export class AuthController extends BaseController {
     @Res() response: Response) {
 
     try {
-      const userId = SecurityHelper.getSessionUserFromToken(request).appUserId
+      const userId = SecurityHelper.getSessionUserFromToken(request)?.appUserId
       await ServiceRegistry.instance.getService(AuthService).logout(userId);
 
       SecurityHelper.clearJWTCookie(response);
@@ -102,82 +102,28 @@ export class AuthController extends BaseController {
     }
   }
 
-  // @Get('/:authType')
-  // public async startSocialNetAuthentication (
-  //   @Param('authType') authStrategyType: string,
-  //   @Req() request: Request,
-  //   @Res() response: Response) {
+  @UseBefore(authorized())
+  @Post('/password/change')
+  public async changePassword (
+    @Req() request: Request,
+    @Res() response: Response,
+    @BodyParam('password') newPassword: string) {
 
-  //   if (!PassportProviders.getProviderNameByAuthType(authStrategyType)) {
-  //     const logonResult = new AuthResult();
-  //     //  BaseController.addJWTCookie(response, logonResult, null);
-  //     logonResult.makeErrorResult(new BadRequest('Invalid passport provider'));
-  //     return this.createRedirectResponse(response, `/auth/callback/login`)
-  //   }
+    try {
+      const userId = SecurityHelper.getSessionUserFromToken(request)?.appUserId
+      const result = await ServiceRegistry.instance.getService(AuthService).changePassword(userId, newPassword);
 
-  //   let scope = {};
-  //   if (authStrategyType === 'google') {
-  //     scope = { scope: ['email profile'] };
-  //   }
-  //   return new Promise((resolve) => {
-  //     passport.authenticate(authStrategyType, scope,
-  //       () => {
-  //         resolve({})
-  //       })(request, response);
-  //   });
-  // }
+      if (result.logonStatus === LogonStatus.PasswordChanged) {
+        SecurityHelper.setJWTCookie(response, result.newAccessToken);
+      }
 
-  // @Get('/:authType/callback')
-  // public async authenticateSocialNetwork (
-  //   @Param('authType') authStrategyType: string,
-  //   @Req() request: Request,
-  //   @Res() response: Response) {
+      delete result.newAccessToken;
 
-  //   return this.authenticateResponsePromise(authStrategyType, request, response);
-  // }
+      return this.createSuccessResponse(result, response);
 
-  // private authenticateResponsePromise (authStrategyType: string, request: Request, response: Response) {
-  //   return new Promise((resolve) => {
-  //     passport.authenticate(authStrategyType,
-  //       async (logonResult: AuthResult) => {
+    } catch (err) {
+      return this.createFailureResponse(err, response);
+    }
+  }
 
-  //         let newAccessToken = null;
-
-  //         // Устанавливаем в сесии анонима и чистим куку с токеном
-  //         SecurityControllerHelper.setSessionUserAnonymous(request, response);
-
-  //         if (!logonResult) {
-  //           logonResult = new AuthResult();
-  //           logonResult.makeErrorResult(new Unauthorized(`${request.ip} unauthorized`));
-  //         }
-
-  //         // Выставляем в сессию юзверя сессионого и высталяем куку с токеном
-  //         if (logonResult.logonStatus === LogonStatus.OK) {
-  //           SecurityControllerHelper.setSessiontUser(logonResult.sessionUser, request);
-  //           SecurityControllerHelper.setJWTCookie(response, logonResult.newAccessToken);
-  //         }
-
-  //         // Если требуется подтверждение по SMS, то сбрасываем юзверя, будем ждать подтверждения
-  //         if (logonResult.logonStatus === LogonStatus.RequereConfirmBySmsCode) {
-  //           SecurityControllerHelper.setSessiontUser(logonResult.sessionUser, request);
-  //           delete logonResult.sessionUser;
-  //         }
-
-  //         if (logonResult.logonStatus === LogonStatus.UserNotFoundButSocialNetworkAuthOK) {
-  //           newAccessToken = JWTHelper.createAndSignJwt(logonResult.sessionUser, Guid.newGuid());
-  //         }
-
-  //         delete logonResult.newAccessToken;
-
-  //         if (authStrategyType === PassportProviders.LOCAL) {
-  //           resolve(this.createSuccessResponse(logonResult, response));
-  //         } else {
-  //           // BaseController.addJWTCookie(response, logonResult, newAccessToken);
-  //           SecurityControllerHelper.setJWTCookie(response, newAccessToken);
-  //           resolve(this.createRedirectResponse(response, `/auth/callback/login`));
-  //         }
-
-  //       })(request, response, null);
-  //   });
-  // }
 }

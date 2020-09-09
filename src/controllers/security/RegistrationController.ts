@@ -43,6 +43,7 @@ export class RegistrationController extends BaseController {
         }
     }
 
+    // FIXME: Схлопнуть два метода. Нет разницы это ссылка или код-смс
     @UseBefore(temporaryAuthorized())
     @Get('/registration/confirm/mail/:token')
     public async confirmRegistrationByEmail (

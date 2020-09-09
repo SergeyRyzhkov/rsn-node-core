@@ -25,7 +25,7 @@ import { SessionUser } from '../../../models/security/SessionUser';
 export class AppUserService extends BaseService {
 
   public async getById (userId: number) {
-    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user_api_v', 'app_user_id=$1', [userId]);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user', 'app_user_id=$1', [userId]);
     return plainToClass(AppUser, dbResult)
   }
 
@@ -33,22 +33,22 @@ export class AppUserService extends BaseService {
     if (!login || login === undefined) {
       return null;
     }
-    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user_api_v', 'LOWER(app_user_login)=$1', [login.trim().toLowerCase()]);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user', 'LOWER(app_user_login)=$1', [login.trim().toLowerCase()]);
     return plainToClass(AppUser, dbResult)
   }
 
   public async getByEmailConfirmationCode (token: string | number) {
-    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user_api_v', 'app_user_reg_token=$1', [token]);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user', 'app_user_reg_token=$1', [token]);
     return plainToClass(AppUser, dbResult)
   }
 
   public async getBySmsConfirmationCode (code: number) {
-    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user_api_v', 'app_user_sms_code=$1', [code]);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user', 'app_user_sms_code=$1', [code]);
     return plainToClass(AppUser, dbResult)
   }
 
   public async getByResetPasswordToken (token: string) {
-    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user_api_v', 'app_user_reset_pwd=$1', [token]);
+    const dbResult = await postgresWrapper.oneOrNoneWhere('app_user', 'app_user_reset_pwd=$1', [token]);
     return plainToClass(AppUser, dbResult)
   }
 

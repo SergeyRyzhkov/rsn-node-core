@@ -8,12 +8,12 @@ if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir);
 }
 
-const errorFile = path.resolve(logDir, 'serverlog.log');
+const logFile = path.resolve(logDir, 'serverlog.log');
 const exceptionsFile = path.resolve(logDir, 'exceptions.log');
 
 const { combine, timestamp, label, printf } = format;
 
-const myFormat = printf(({ level, message, label, timestamp }) => {
+const printFormatFn = printf(({ level, message, label, timestamp }) => {
   return `${timestamp} [${label}] ${level}: ${message}`;
 });
 
@@ -22,19 +22,24 @@ export const logger = createLogger({
   format: combine(
     label({ label: 'right meow!' }),
     timestamp(),
-    myFormat
+    printFormatFn
   ),
   transports: [
     new transports.File(
       {
         level: 'info',
-        filename: errorFile,
+        filename: logFile,
         handleExceptions: true
       }
     )
   ],
   exceptionHandlers: [
-    new transports.File({ filename: exceptionsFile })
+    new transports.File(
+      {
+        filename: exceptionsFile,
+        handleExceptions: true
+      }
+    )
   ]
 });
 

@@ -13,7 +13,8 @@ export enum LogonStatus {
   Error,
   Unknown,
   RequereConfirmBySmsCode,
-  RegistrationNotConfirmed
+  RegistrationNotConfirmed,
+  PasswordChanged
 }
 
 export class AuthResult {
@@ -23,11 +24,11 @@ export class AuthResult {
   public message: string;
   public newAccessToken: string;
 
-  public makeUnknownResult () {
+  public makeUnknown () {
     this.logonStatus = LogonStatus.Unknown;
   }
 
-  public makeOKResult (sessionUser: SessionUser, message: string) {
+  public makeOK (sessionUser: SessionUser, message: string) {
     this.logonStatus = LogonStatus.OK;
     this.exception = null;
     this.sessionUser = sessionUser;
@@ -35,7 +36,7 @@ export class AuthResult {
     return this;
   }
 
-  public makeShouldChangePasswordResult (sessionUser: SessionUser) {
+  public makeShouldChangePassword (sessionUser: SessionUser) {
     this.logonStatus = LogonStatus.ShouldChangePassword;
     this.exception = null;
     this.sessionUser = sessionUser;
@@ -48,14 +49,14 @@ export class AuthResult {
     return this;
   }
 
-  public makeFailedResult (message?: string) {
+  public makeFailed (message?: string) {
     this.logonStatus = LogonStatus.Failed;
     this.sessionUser = SessionUser.anonymousUser;
     this.message = message;
     return this;
   }
 
-  public makeBlockedResult (message: string) {
+  public makeBlocked (message: string) {
     this.logonStatus = LogonStatus.Blocked;
     this.sessionUser = SessionUser.anonymousUser;
     this.message = message;
@@ -70,7 +71,7 @@ export class AuthResult {
   }
 
 
-  public makeErrorResult (exception: Exception) {
+  public makeError (exception: Exception) {
     this.logonStatus = LogonStatus.Error;
     this.exception = exception;
     this.sessionUser = SessionUser.anonymousUser;
@@ -83,4 +84,11 @@ export class AuthResult {
     this.message = message;
     return this;
   }
+
+  public makePasswordChanged (sessionUser: SessionUser) {
+    this.logonStatus = LogonStatus.PasswordChanged;
+    this.sessionUser = sessionUser;
+    return this;
+  }
+
 }

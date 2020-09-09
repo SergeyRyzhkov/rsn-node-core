@@ -56,7 +56,8 @@ export class RegistrationService extends BaseService {
             // Создаем и сохраняем в базе нового пользователя
             const newAppUser = new AppUser();
             newAppUser.appUserLogin = login;
-            newAppUser.appUserMail = !this.options.isLoginByPhone && !!newAppUser.appUserMail ? login : newAppUser.appUserMail
+            // FIXME: Выставлять телефон или почту в зависимости от способа логина
+            // newAppUser.appUserMail = newAppUser.appUserMail;
             newAppUser.appUserPwdHash = bcrypt.hashSync(password, this.options.bcryptSaltRounds);
             newAppUser.appUserRegDate = new Date(Date.now()).toUTCString();
             newAppUser.appUserRegVerifiedInd = !this.options.isRequireConfirmationByEmail && !this.options.isRequireConfirmationBySms ? 1 : 0;

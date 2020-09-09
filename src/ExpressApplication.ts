@@ -20,12 +20,12 @@ import { ServiceRegistry } from './ServiceRegistry';
 import { AppController } from './controllers/AppController';
 import { AuthController } from './controllers/security/AuthController';
 import { RegistrationController } from './controllers/security/RegistrationController';
-import { ResetChangePwdController } from './controllers/security/ResetChangePwdController';
+import { ResetPasswordController } from './controllers/security/ResetPasswordController';
 import { AppUserService } from './services/security/user/AppUserService';
 import { AppUserSessionService } from './services/security/user/AppUserSessionService';
 import { AuthService } from './services/security/auth/AuthService';
 import { RegistrationService } from './services/security/registration/RegistrationService';
-import { ResetChangePwdService } from './services/security/reset/ResetChangePwdService';
+import { ResetPasswordService } from './services/security/reset/ResetPasswordService';
 import { AppUser } from './models/security/AppUser';
 import { AppUserSession } from './models/security/AppUserSession';
 import { AppUserSocialNetProfile } from './models/security/AppUserSocialNetProfile';
@@ -124,11 +124,11 @@ export class ExpressApplication {
         register(AppUserSessionService).
         register(AuthService).
         register(RegistrationService).
-        register(ResetChangePwdService);
+        register(ResetPasswordService);
 
       // FIXME: Для них по хорошему надо также сделать Registry, а не сувать в App
       const entities = [AppUser, AppUserSession, AppUserSocialNetProfile];
-      const controllers = [AppController, AuthController, RegistrationController, ResetChangePwdController];
+      const controllers = [AppController, AuthController, RegistrationController, ResetPasswordController];
       this.addAppControllers(controllers).addTypeOrmEntityMetadata(entities);
     }
 

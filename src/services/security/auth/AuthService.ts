@@ -19,7 +19,6 @@ import { Unauthorized } from '@/exceptions/authErrors/Unauthorized';
 import { ConfigManager } from '@/ConfigManager';
 import { SecurityConfig } from '../SecurityConfig';
 
-// FIXME: Проверять подтверждена ли регистрация
 // FIXME: Поле для подтвержденного кода логина - и использовать это в this.isUserAuthorized
 export class AuthService extends BaseService {
 
@@ -36,7 +35,7 @@ export class AuthService extends BaseService {
   public async loginByPassword (login: string, password: string, unlinkedSocialProfile: SessionUser): Promise<AuthResult> {
     let sessionUser = null;
     const logonResult: AuthResult = new AuthResult();
-    logonResult.makeUnknownResult();
+    logonResult.makeUnknown();
 
     try {
 
@@ -44,7 +43,7 @@ export class AuthService extends BaseService {
 
       // Нет такого пользователя (с логином)
       if (!user) {
-        return logonResult.makeFailedResult(this.options.failedMessage);
+        return logonResult.makeFailed(this.options.failedMessage);
       }
 
       // Проверяем пароль
@@ -53,7 +52,7 @@ export class AuthService extends BaseService {
 
         // Проверим на блокировку
         if (user.appUserBlockedInd === 1) {
-          return logonResult.makeBlockedResult(this.options.userBlockedMessage);
+          return logonResult.makeBlocked(this.options.userBlockedMessage);
         }
 
         // Проверим подтверждение регистрации
@@ -92,16 +91,16 @@ export class AuthService extends BaseService {
           return logonResult.makeRequereConfirmBySmsCode(sessionUser, this.options.requireSmsConfirmationMessage);
         }
 
-        return logonResult.makeOKResult(sessionUser, this.options.authOkMessage);
+        return logonResult.makeOK(sessionUser, this.options.authOkMessage);
 
       } else {
-        return logonResult.makeFailedResult(this.options.failedMessage);
+        return logonResult.makeFailed(this.options.failedMessage);
       }
     } catch (err) {
       if (err && err.includes && err.includes('BCrypt')) {
-        return logonResult.makeFailedResult(this.options.failedMessage);
+        return logonResult.makeFailed(this.options.failedMessage);
       } else {
-        logonResult.makeErrorResult(new InternalServerError(err.message, err));
+        logonResult.makeError(new InternalServerError(err.message, err));
         logonResult.message = this.options.errorMessage;
         logger.error(err);
         return logonResult;
@@ -109,6 +108,33 @@ export class AuthService extends BaseService {
     }
   }
 
+
+  // Смена пароля
+  public async changePassword (userId: number, newPassword: string) {
+    const result: AuthResult = new AuthResult();
+    result.makeUnknown();
+
+    // FIXME: Implement this
+    // if (!isPasswordStrenght(password)) {
+    //     return registrationResult.makeInvalid(this.options.passwordNotStrenghtMessage);
+    // }
+
+    try {
+      const user = await ServiceRegistry.instance.getService(AppUserService).getById(userId);
+      if (!!user) {
+        user.appUserPwdHash = bcrypt.hashSync(newPassword, ConfigManager.instance.getOptions(SecurityConfig).registrationOptions.bcryptSaltRounds);
+        await ServiceRegistry.instance.getService(AppUserService).save(user);
+
+        const sessionUser = ServiceRegistry.instance.getService(AppUserService).convertAppUserToSessionUser(user);
+        result.newAccessToken = await ServiceRegistry.instance.getService(AppUserSessionService).saveUserSessionAndCreateJwt(sessionUser);
+        result.makePasswordChanged(sessionUser);
+      }
+    } catch (err) {
+
+    }
+
+    return result;
+  }
 
   /// -------------------------------------------------------------------------------------------------
 
@@ -194,7 +220,7 @@ export class AuthService extends BaseService {
 
     try {
       if (!!user) {
-        // FIXME: Переименовать это поле - appUserRegVerifiedInd Это проверка кода не только для регистрации
+        // FIXME: Переименовать это поле - appUserRegVerifiedInd Это проверка кода только для регистрации
         user.appUserRegVerifiedInd = 1;
         user.appUserRegToken = null;
         user.appUserSmsCode = null;
@@ -203,13 +229,13 @@ export class AuthService extends BaseService {
         // Все нормально 
         const sessionUser = ServiceRegistry.instance.getService(AppUserService).convertAppUserToSessionUser(user);
         result.newAccessToken = await ServiceRegistry.instance.getService(AppUserSessionService).saveUserSessionAndCreateJwt(sessionUser);
-        result.makeOKResult(sessionUser, this.options.authOkMessage);
+        result.makeOK(sessionUser, this.options.authOkMessage);
       } else {
-        result.makeFailedResult(this.options.invalidConfirmationCodeMessage);
+        result.makeFailed(this.options.invalidConfirmationCodeMessage);
       }
     } catch (err) {
       logger.error(err);
-      result.makeFailedResult(this.options.invalidConfirmationCodeMessage);
+      result.makeFailed(this.options.invalidConfirmationCodeMessage);
     } finally {
       return result;
     }
@@ -259,7 +285,7 @@ export class AuthService extends BaseService {
       // Нет сессии (истекла и удалена, или юзверь вышел)
       const session: AppUserSession = await ServiceRegistry.instance.getService(AppUserSessionService).getByToken(sessionToken);
       if (!session) {
-        throw new Unauthorized('Session not found');
+        throw new UserSessionExpiredException('Session not found');
       }
 
       // Истекло время жизни сессии (рефреш токена)
@@ -296,6 +322,7 @@ export class AuthService extends BaseService {
 
 
   // Отправка смс - для подтверждения входа
+  // FIXME: Также сделать проверку кода по почте
   private async sendSmsConfirmRegistrationMessage (user: AppUser) {
     user.appUserSmsCode = 77777;
     return await ServiceRegistry.instance.getService(AppUserService).save(user);

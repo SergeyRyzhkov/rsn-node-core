@@ -1,4 +1,4 @@
-import { IMain, IDatabase, IEventContext } from 'pg-promise';
+import { IMain, IDatabase } from 'pg-promise';
 import pgPromise from 'pg-promise';
 import { SortPagination } from '../models/SortPagination';
 import camelcaseKeys from 'camelcase-keys';

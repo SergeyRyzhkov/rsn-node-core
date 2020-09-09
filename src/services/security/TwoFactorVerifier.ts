@@ -3,7 +3,7 @@ import { AppUserService } from './user/AppUserService';
 import { AppUser } from '@/models/security/AppUser';
 import { logger } from '@/utils/Logger';
 
-// FIXME: Это можно вынести в AppUserService или AppUserSessionService
+// FIXME: Это можно вынести в AppUserService или AppUserSessionService Или непосредственно где используется
 export class TwoFactorVerifier {
 
     public async verifyByEmailLink (emailCode: string): Promise<AppUser> {

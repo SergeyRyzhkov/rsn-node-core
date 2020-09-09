@@ -1,7 +1,7 @@
 import { AppController } from './controllers/AppController';
 import { AuthController } from './controllers/security/AuthController';
 import { RegistrationController } from './controllers/security/RegistrationController';
-import { ResetChangePwdController } from './controllers/security/ResetChangePwdController';
+import { ResetPasswordController } from './controllers/security/ResetPasswordController';
 import { AppUser } from './models/security/AppUser';
 import { AppUserSession } from './models/security/AppUserSession';
 import { AppUserSocialNetProfile } from './models/security/AppUserSocialNetProfile';
@@ -9,7 +9,7 @@ import { ExpressApplication } from './ExpressApplication';
 import { ServiceRegistry } from './ServiceRegistry';
 import { AuthService } from './services/security/auth/AuthService';
 import { RegistrationService } from './services/security/registration/RegistrationService';
-import { ResetChangePwdService } from './services/security/reset/ResetChangePwdService';
+import { ResetPasswordService } from './services/security/reset/ResetPasswordService';
 import { AppUserSessionService } from './services/security/user/AppUserSessionService';
 import { AppUserService } from './services/security/user/AppUserService';
 import { ConfigManager } from './ConfigManager';

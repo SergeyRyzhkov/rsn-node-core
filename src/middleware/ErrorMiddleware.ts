@@ -7,6 +7,7 @@ import { ResponseWrapper } from '@/controllers/ResponseWrapper';
 export const errorMiddleware = () => {
   return async (err: any, req: Request, res: Response, next: NextFunction) => {
     logger.error(err.message);
+    logger.error(err.toString());
     if (res.headersSent) {
       next(err);
     } else {
