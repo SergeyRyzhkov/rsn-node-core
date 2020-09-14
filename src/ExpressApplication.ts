@@ -15,7 +15,6 @@ import xss from 'xss-clean';
 import hpp from 'hpp';
 import { ExpressConfig } from './ExpressConfig';
 import { ConfigManager } from './ConfigManager';
-import { DatabaseConfig } from './DatabaseConfig';
 import { ServiceRegistry } from './ServiceRegistry';
 import { AppController } from './controllers/AppController';
 import { AuthController } from './controllers/security/AuthController';
@@ -41,7 +40,7 @@ export class ExpressApplication {
   private ormEntityModelMetadata: any[] = [];
 
   constructor(config?: ExpressConfig) {
-    this.config = config || ConfigManager.instance.getOptions(ExpressConfig);
+    this.config = config || ConfigManager.instance.getOptionsAsClass(ExpressConfig, "ExpressConfig");
     this.config = this.config || new ExpressConfig();
   }
 
@@ -117,7 +116,7 @@ export class ExpressApplication {
       ));
     }
 
-    if (ConfigManager.instance.exists(SecurityConfig)) {
+    if (ConfigManager.instance.exists("SecurityConfig")) {
       this.app.use(verifyUpdateAccessToken());
 
       ServiceRegistry.instance.register(AppUserService).
@@ -132,7 +131,7 @@ export class ExpressApplication {
       this.addAppControllers(controllers).addTypeOrmEntityMetadata(entities);
     }
 
-    if (ConfigManager.instance.exists(DatabaseConfig)) {
+    if (ConfigManager.instance.exists("DatabaseConfig")) {
       await TypeOrmManager.initConnection(this.ormEntityModelMetadata);
     }
 

@@ -1,10 +1,9 @@
-import { ModuleOptions } from '@/ConfigManager';
 import { RegistrationOptions } from './registration/RegistrationOptions';
 import { AuthOptions } from './auth/AuthOptions';
 import { SignOptions } from 'jsonwebtoken';
 import { ResetPasswordOptions } from './reset/ResetPasswordOptions';
 
-export class SecurityConfig extends ModuleOptions {
+export class SecurityConfig {
     public jwtCookieName = "auth-rsn-cookie";
     public jwtSecretKey = "gostorgiryzhkov1976";
     public jwtSignOptions: SignOptions = {

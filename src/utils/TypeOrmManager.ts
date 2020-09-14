@@ -8,7 +8,7 @@ export class TypeOrmManager {
 
   public static async initConnection (entityList: any[]) {
     if (!this.connectionInit) {
-      const dbConfig = ConfigManager.instance.getOptionsAsPlain(DatabaseConfig);
+      const dbConfig = ConfigManager.instance.getOptionsAsPlain("DatabaseConfig");
       const config = { ...dbConfig, entities: entityList };
       await createConnection(config);
       this.connectionInit = true;

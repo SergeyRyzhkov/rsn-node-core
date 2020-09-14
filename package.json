@@ -1,6 +1,6 @@
 {
   "name": "rsn-express-core",
-  "version": "1.5.9",
+  "version": "1.8.5",
   "description": "Sergey Ryzhkov core Express (node) platform",
   "main": "index.js",
   "repository": "git@github.com:SergeyRyzhkov/rsn-node-core",
@@ -44,8 +44,8 @@
     "body-parser": "latest",
     "camelcase-keys": "latest",
     "class-transformer": "latest",
-    "class-validator": "^0.12.2",
-    "cookie-parser": "^1.4.5",
+    "class-validator": "latest",
+    "cookie-parser": "latest",
     "cors": "latest",
     "cuid": "latest",
     "express": "latest",

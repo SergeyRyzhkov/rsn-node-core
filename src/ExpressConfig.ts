@@ -1,6 +1,5 @@
-import { ModuleOptions } from '@/ConfigManager';
 
-export class ExpressConfig extends ModuleOptions {
+export class ExpressConfig {
     port = 3003;
     host = "http://localhost:3003";
     restApiBaseUrl = "/api/2_0";

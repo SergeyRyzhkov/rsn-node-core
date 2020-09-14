@@ -1,33 +1,65 @@
 import { Response } from 'node-fetch';
 import fetch from 'node-fetch';
-import * as HttpProxyAgent from 'http-proxy-agent';
-import * as HttpsProxyAgent from 'https-proxy-agent';
+import HttpProxyAgent from 'http-proxy-agent';
+import HttpsProxyAgent from 'https-proxy-agent';
+import fs from 'fs';
+import { createReadStream } from 'fs';
+import util from 'util';
+import stream from "stream";
 
-// TODO: Сделать отдельно ля json, body,text, blob, formData? Или в результат прописывать  fetchResult?
-// TODO: Скачивание файла и запись в файл 
-// TODO: Patch отдельно сденлать
-
-// Интросептеры как ниже или свой пул use (req,resp).use... использовать
-// fetch = (originalFetch => {
-//   return (...arguments) => {
-//     const result = originalFetch.apply(this, arguments)
-//     return result.then(console.log("Request was sent"))
-//   }
-// })(fetch)
+const streamPipeline = util.promisify(stream.pipeline)
 
 class FetchWrapper {
 
-  public async get (url: string, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
-    const res = this.doFetch(url, { ...options, ...{ method: 'GET' } }, proxy);
-    return this.processRequest(res);
+  public async getJSON (url: string, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
+    return this.get(url, options, proxy);
   }
 
-  public async put (url: string, options?: any, body?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
-    return this.putOrPost(false, url, options, body, proxy);
+  public async getText (url: string, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
+    return this.get(url, options, proxy, (resp) => resp.text());
   }
 
-  public async post (url: string, options?: any, body?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
-    return this.putOrPost(true, url, options, body, proxy);
+  public async getTextConverted (url: string, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
+    return this.get(url, options, proxy, (resp) => resp.textConverted());
+  }
+
+  public async getBuffer (url: string, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
+    return this.get(url, options, proxy, (resp) => resp.buffer());
+  }
+
+  public async getArrayBuffer (url: string, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
+    return this.get(url, options, proxy, (resp) => resp.arrayBuffer());
+  }
+
+  public async getBlob (url: string, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
+    return this.get(url, options, proxy, (resp) => resp.blob());
+  }
+
+  public async download (url: string, filePath: string, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
+    try {
+      const result = await this.get(url, options, proxy);
+      await streamPipeline(result.body, fs.createWriteStream(filePath));
+      Promise.resolve(result);
+    }
+    catch (err) {
+      Promise.reject({ statusText: err.message });
+    }
+  }
+
+  public async uploadFile (url: string, filePath: string, method: 'POST' | 'PUT' | 'PATCH', options?: any) {
+    return this.putOrPostOrPatch(url, method, options, createReadStream(filePath));
+  }
+
+  public async put (url: string, options?: any, body?: ArrayBuffer | ArrayBufferView | NodeJS.ReadableStream | string | URLSearchParams | FormData, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
+    return this.putOrPostOrPatch('PUT', url, options, body, proxy);
+  }
+
+  public async post (url: string, options?: any, body?: ArrayBuffer | ArrayBufferView | NodeJS.ReadableStream | string | URLSearchParams | FormData, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
+    return this.putOrPostOrPatch('POST', url, options, body, proxy);
+  }
+
+  public async patch (url: string, options?: any, body?: ArrayBuffer | ArrayBufferView | NodeJS.ReadableStream | string | URLSearchParams | FormData, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
+    return this.putOrPostOrPatch('PATCH', url, options, body, proxy);
   }
 
   public async postForm (url: string, formData: FormData, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
@@ -36,8 +68,7 @@ class FetchWrapper {
         'Content-Type': 'multipart/form-data'
       }
     }
-
-    return this.post(url, formData, { ...options, ...conf }, proxy);
+    return this.putOrPostOrPatch('POST', url, { ...options, ...conf }, formData, proxy);
   }
 
   public async delete (url: string, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
@@ -45,39 +76,28 @@ class FetchWrapper {
     return this.processRequest(res);
   }
 
-  private putOrPost (isPost: boolean, url: string, options?: any, body?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
-    const mergedOptions = { ...options, ...{ method: isPost ? 'POST' : 'PUT' }, ... { body: !!body ? (String(body) === body ? body : JSON.stringify(body)) : null } };
+  private async get (url: string, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }, getDataFn?: (response: Response) => any) {
+    const res = this.doFetch(url, { ...options, ...{ method: 'GET' } }, proxy);
+    return this.processRequest(res, getDataFn);
+  }
+
+  private putOrPostOrPatch (method: string, url: string, options?: any,
+    body?: ArrayBuffer | ArrayBufferView | NodeJS.ReadableStream | string | URLSearchParams | FormData,
+    proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
+
+    const mergedOptions = { ...options, ...{ method }, ... { body } };
     const res = this.doFetch(url, mergedOptions, proxy);
     return this.processRequest(res);
   }
 
-  private async processRequest (fetchResult: Promise<Response>): Promise<{ data: any, status: number, statusText: string }> {
-    const response: any = {}
-    try {
-      const result = await fetchResult;
-
-      response.data = await result.json();
-      response.status = result.status;
-      response.statusText = result.statusText;
-
-      if (!result.ok || result.status > 399) {
-        return Promise.reject(response);
-      }
-      return Promise.resolve(response);
-    }
-    catch (err) {
-      response.statusText = err.message;
-      return Promise.reject(response);
-    }
-  }
 
   private doFetch (url: string, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }): Promise<Response> {
     const defaultOptions: any = {
       timeout: 5000,
-      headers: {
-        'Accept': 'text/html,application/json,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:72.0) Gecko/20100101 Firefox/72.0' + Math.random().toString()
-      },
+      // headers: {
+      //   'Accept': 'text/html,application/json,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      //   'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:72.0) Gecko/20100101 Firefox/72.0' + Math.random().toString()
+      // },
       follow: 9
     }
 
@@ -94,6 +114,28 @@ class FetchWrapper {
     return fetch(url, requestOptions);
   }
 
+
+  private async processRequest (fetchResult: Promise<Response>, getDataFn?: (response: Response) => any): Promise<{ data: any, status: number, statusText: string, headers: Headers, body: NodeJS.ReadableStream }> {
+    const response: any = {}
+    try {
+      const result = await fetchResult;
+
+      response.data = !!getDataFn ? await getDataFn(result) : await result.json();
+      response.status = result.status;
+      response.statusText = result.statusText;
+      response.headers = result.headers;
+      response.body = result.body
+
+      if (!result.ok || result.status > 399) {
+        return Promise.reject(response);
+      }
+      return Promise.resolve(response);
+    }
+    catch (err) {
+      response.statusText = err.message;
+      return Promise.reject(response);
+    }
+  }
 }
 
 export const fetchWrapper = new FetchWrapper();

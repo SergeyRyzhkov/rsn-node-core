@@ -9,7 +9,6 @@ import { RegistrationOptions } from './RegistrationOptions';
 import { MailSender } from '@/services/mail/MailSender';
 import { Guid } from '@/utils/Guid';
 import { SessionUser } from '../../../models/security/SessionUser';
-import { TwoFactorVerifier } from '../TwoFactorVerifier';
 import { AppUserSessionService } from '../user/AppUserSessionService';
 import { ConfigManager } from '@/ConfigManager';
 import { SecurityConfig } from '../SecurityConfig';
@@ -18,11 +17,10 @@ import { SmtpOptions } from '@/services/mail/SmtpOptions';
 export class RegistrationService extends BaseService {
     private options: RegistrationOptions;
     private mailSender: MailSender = new MailSender();
-    private twoFactorVerifier: TwoFactorVerifier = new TwoFactorVerifier();
 
     constructor(options?: RegistrationOptions) {
         super();
-        this.options = options || ConfigManager.instance.getOptions(SecurityConfig)?.registrationOptions;
+        this.options = options || ConfigManager.instance.getOptionsAsClass(SecurityConfig, "SecurityConfig")?.registrationOptions;
         this.options = this.options || new RegistrationOptions();
     }
 
@@ -60,7 +58,7 @@ export class RegistrationService extends BaseService {
             // newAppUser.appUserMail = newAppUser.appUserMail;
             newAppUser.appUserPwdHash = bcrypt.hashSync(password, this.options.bcryptSaltRounds);
             newAppUser.appUserRegDate = new Date(Date.now()).toUTCString();
-            newAppUser.appUserRegVerifiedInd = !this.options.isRequireConfirmationByEmail && !this.options.isRequireConfirmationBySms ? 1 : 0;
+            newAppUser.appUserRegVerifiedInd = (this.options.isRequireConfirmationByEmail || this.options.isRequireConfirmationBySms) ? 0 : 1;
 
             await userService.save(newAppUser);
 
@@ -100,17 +98,9 @@ export class RegistrationService extends BaseService {
         } catch (err) {
             logger.error(err);
             return registrationResult.makeInvalid();
+        } finally {
+            return registrationResult;
         }
-    }
-
-    public async confirmRegistrationByEmail (token: string) {
-        const user = await this.twoFactorVerifier.verifyByEmailLink(token);
-        return this.onConfirmRegistration(user);
-    }
-
-    public async confirmRegistrationByCode (code: number, appUserId: number) {
-        const user = await this.twoFactorVerifier.verifyByCode(code, appUserId);
-        return this.onConfirmRegistration(user);
     }
 
     // Отправка почты - для подтверждения регистрации
@@ -124,7 +114,7 @@ export class RegistrationService extends BaseService {
         }
 
         const message = {
-            from: ConfigManager.instance.getOptions(SmtpOptions).from,
+            from: ConfigManager.instance.getOptionsAsClass(SmtpOptions, "SmtpOptions").from,
             to: user.appUserMail,
             text: '',
             html: '',
@@ -135,14 +125,48 @@ export class RegistrationService extends BaseService {
 
     // Отправка смс - для подтверждения регистрации
     public async sendSmsConfirmRegistrationMessage (user: AppUser) {
-        user.appUserSmsCode = 55555;
+        user.appUserSmsCode = 1;
         return await ServiceRegistry.instance.getService(AppUserService).save(user);
     }
 
 
+    // FIXME: Учесть время жизни
+    // Подтверждение регистрации по коду
+    public async confirmRegistrationByEmail (urlToken: string) {
+        let registrationResult: RegistrationResult = new RegistrationResult();
+
+        try {
+            const verifiedUser = await ServiceRegistry.instance.getService(AppUserService).getByEmailConfirmationCode(urlToken);
+            if (!!verifiedUser) {
+                registrationResult = await this.onConfirmRegistration(verifiedUser);
+            }
+        } catch (err) {
+            logger.error(err);
+            registrationResult.makeInvalid(this.options.invalidConfirmationCodeMessage);
+        } finally {
+            return registrationResult;
+        }
+    }
+
+    // Подтверждение регистрации по коду
+    public async confirmRegistrationByCode (code: number, appUserId: number) {
+        let registrationResult: RegistrationResult = new RegistrationResult();
+
+        try {
+            const verifiedUser = await ServiceRegistry.instance.getService(AppUserService).getById(appUserId);
+            if (!!verifiedUser && verifiedUser.appUserSmsCode === code) {// && !this.isRegistrationCodeExpired(verifiedUser) ? verifiedUser : null;)
+                registrationResult = await this.onConfirmRegistration(verifiedUser);
+            }
+        } catch (err) {
+            logger.error(err);
+            registrationResult.makeInvalid(this.options.invalidConfirmationCodeMessage);
+        } finally {
+            return registrationResult;
+        }
+    }
+
     private async onConfirmRegistration (verifiedUser: AppUser) {
         const registrationResult: RegistrationResult = new RegistrationResult();
-
         try {
             if (!!verifiedUser) {
                 verifiedUser.appUserRegVerifiedInd = 1;

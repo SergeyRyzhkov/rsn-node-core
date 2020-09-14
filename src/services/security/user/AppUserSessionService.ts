@@ -12,7 +12,7 @@ import { SecurityConfig } from '../SecurityConfig';
 // TODO: Можно сделать абстрактный класс для хранения (и имплементации - мемори, редиска, база,...)
 export class AppUserSessionService extends BaseService {
 
-  private securityConfig = ConfigManager.instance.getOptions(SecurityConfig);
+  private securityConfig = ConfigManager.instance.getOptionsAsClass(SecurityConfig, "SecurityConfig");
 
   public async getByToken (token: string) {
     const dbResult = await postgresWrapper.oneOrNoneWhere('app_user_session', 'user_session_token=$1', [token]);

@@ -72,10 +72,9 @@ enum TypeId {
 }
 
 
-// FIXME: Логгирование ошибок
 class PostgresWrapper {
   private postgrePromise: IDatabase<any>;
-  private dbConfig = ConfigManager.instance.getOptionsAsPlain(DatabaseConfig);
+  private dbConfig = ConfigManager.instance.getOptionsAsPlain("DatabaseConfig");
 
   constructor() {
     const initOptions = {

@@ -5,7 +5,6 @@ import { Unauthorized } from '@/exceptions/authErrors/Unauthorized';
 import { SecurityHelper } from '@/controllers/security/SecurityHelper';
 import { ForbiddenException } from '@/exceptions/authErrors/ForbiddenException';
 
-// FIXME: А если пользователь зарегеисрировался, но не подтвердил и это можно (пока не истечет время подтверждения), то не пустет все равно :(
 export const authorized = (errorMessage?: string) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     if (!SecurityHelper.isUserAuthorized(req)) {
@@ -28,29 +27,31 @@ export const temporaryAuthorized = (errorMessage?: string) => {
   }
 }
 
-// FIXME: Исправить на массив ролей у юзверя
-export const permit = (...allowedRoles: number[]) => {
-  // Ищем пересечение ролей на входе замыкания и ролей юзверя
-  // const isAllowed = (userRoles: number[]) => {
-  //   if (!!userRoles && !!allowedRoles) {
-  //     return allowedRoles.filter(x => userRoles.includes(x)).length > 0;
-  //   }
-  //   return false;
-  // }
-  const isAllowed = (roleId: number) => {
-    return !!allowedRoles ? allowedRoles.indexOf(roleId) > -1 : false;
-  }
 
-  return async (req: Request, res: Response, next: NextFunction) => {
-    const user = SecurityHelper.getSessionUserFromToken(req);
+// // FIXME: Исправить на массив ролей у юзверя
+// export const permit = (...allowedRoles: number[]) => {
+//   // Ищем пересечение ролей на входе замыкания и ролей юзверя
+//   // const isAllowed = (userRoles: number[]) => {
+//   //   if (!!userRoles && !!allowedRoles) {
+//   //     return allowedRoles.filter(x => userRoles.includes(x)).length > 0;
+//   //   }
+//   //   return false;
+//   // }
+//   const isAllowed = (roleId: number) => {
+//     return !!allowedRoles ? allowedRoles.indexOf(roleId) > -1 : false;
+//   }
 
-    if (!!user && SecurityHelper.isUserAuthorized(req) && isAllowed(user.roleIdList)) {
-      next();
-    } else {
-      next(new ForbiddenException());
-    }
-  }
-}
+//   return async (req: Request, res: Response, next: NextFunction) => {
+//     const user = SecurityHelper.getSessionUserFromToken(req);
+
+//     if (!!user && SecurityHelper.isUserAuthorized(req) && isAllowed(user.roleIdList)) {
+//       next();
+//     } else {
+//       next();
+//       // next(new ForbiddenException());
+//     }
+//   }
+// }
 
 export const verifyUpdateAccessToken = () => {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -60,7 +61,6 @@ export const verifyUpdateAccessToken = () => {
     if (!!jwt) {
       try {
         const newAccessToken = await ServiceRegistry.instance.getService(AuthService).verifyUpdateAccessToken(jwt);
-
         SecurityHelper.setJWTCookie(res, newAccessToken);
       } catch (err) {
         SecurityHelper.clearJWTCookie(res);

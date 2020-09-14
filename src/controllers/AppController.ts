@@ -5,11 +5,12 @@ import { routingControllersToSpec } from 'routing-controllers-openapi'
 import { authorized } from '@/middleware/SecurityMiddlewares';
 import { ConfigManager } from '@/ConfigManager';
 import { ExpressConfig } from '@/ExpressConfig';
+import { fetchWrapper } from '@/utils/fetchWrapper'
 
 @JsonController('/app')
 export class AppController extends BaseController {
 
-  private baseUrl = ConfigManager.instance.getOptions(ExpressConfig).restApiBaseUrl;
+  private baseUrl = ConfigManager.instance.getOptionsAsClass(ExpressConfig, "ExpressConfig").restApiBaseUrl;
 
   @UseBefore(authorized())
   @Get('/spec')
@@ -31,6 +32,11 @@ export class AppController extends BaseController {
     return this.createSuccessResponse(config, response);
   }
 
+  // @UseBefore(authorized())
+  // @Get('/config')
+  // public async downloadLog (@Res() response: Response) {
+  //   fetchWrapper.download()
+  // }
+
 }
 
-// FIXME: Надо, если секьюрити модуль подключен сразу регистрировать энтити, сервисы, контроллеры

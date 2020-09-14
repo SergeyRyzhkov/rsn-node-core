@@ -6,7 +6,7 @@ import { SecurityConfig } from './SecurityConfig';
 
 export class JWTHelper {
 
-  private static securityConfig = ConfigManager.instance.getOptions(SecurityConfig);
+  private static securityConfig = ConfigManager.instance.getOptionsAsClass(SecurityConfig, "SecurityConfig");
 
   public static createAndSignJwt (sessionUser: SessionUser, sessionId: string): string {
     const payload = { ...sessionUser };

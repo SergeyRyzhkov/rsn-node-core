@@ -80,6 +80,7 @@ export class AppUserService extends BaseService {
       const dbResult = await postgresWrapper.oneOrNoneWhere('app_user_social_net_profile', 'user_sn_profile_code=$1 and user_sn_profile_type=$2', [sessionUser.userSnProfileId, authStrategyType]);
       const tryProfile = plainToClass(AppUserSocialNetProfile, dbResult)
 
+      // FIXME: Использовать plainToClassFromExist
       const newAppUserSocialNetProfile: AppUserSocialNetProfile = tryProfile ? tryProfile : new AppUserSocialNetProfile();
       newAppUserSocialNetProfile.appUserId = sessionUser.appUserId;
       newAppUserSocialNetProfile.userSnProfileCode = sessionUser.userSnProfileId;
@@ -104,16 +105,17 @@ export class AppUserService extends BaseService {
     return null;
   }
 
+  // FIXME: Использовать plainToClassFromExist
   public convertAppUserToSessionUser (appUser: AppUser) {
     const result = new SessionUser();
     result.appUserId = appUser.appUserId;
     result.appUserName = !!appUser.appUserMail ? appUser.appUserMail : appUser.appUserPhone;
     result.appUserRegVerifiedInd = appUser.appUserRegVerifiedInd;
     result.appUserRegDate = appUser.appUserRegDate;
-    result.roleIdList = appUser.roleIdList;
     return result;
   }
 
+  // FIXME: Использовать plainToClassFromExist
   public convertAppUserSocialNetProfileToSessionUser (appUserSocialNetProfile: AppUserSocialNetProfile) {
     const result = new SessionUser();
     result.appUserId = appUserSocialNetProfile.appUserId;

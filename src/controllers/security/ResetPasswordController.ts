@@ -15,6 +15,8 @@ export class ResetPasswordController extends BaseController {
         @Req() request: Request,
         @Res() response: Response) {
 
+        SecurityHelper.clearJWTCookie(response);
+
         try {
             const result: ResetPasswordResult = await ServiceRegistry.instance.getService(ResetPasswordService).sendResetPasswordMessage(login);
             return this.createSuccessResponse(result, response);
@@ -32,6 +34,10 @@ export class ResetPasswordController extends BaseController {
         @Req() request: Request,
         @Res() response: Response) {
 
+        SecurityHelper.clearJWTCookie(response);
+
+        // FIXME: Cannot read property 'status' of undefined
+
         try {
             const result: ResetPasswordResult = await ServiceRegistry.instance.getService(ResetPasswordService).confirmResetPasswordByCode(code);
             // Выставляем куку с токеном
@@ -41,9 +47,11 @@ export class ResetPasswordController extends BaseController {
 
             delete result.newAccessToken;
 
+            return this.createSuccessResponse(result, response);
+
         } catch (err) {
             const result = new ResetPasswordResult();
-            result.makeFailed(err);
+            result.makeFailed(err.message);
             return this.createSuccessResponse(result, response);
 
         }

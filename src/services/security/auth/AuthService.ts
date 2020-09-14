@@ -13,7 +13,6 @@ import { AppUserSession } from '@/models/security/AppUserSession';
 import { UserSessionExpiredException } from '@/exceptions/authErrors/UserSessionExpiredException';
 import { AuthOptions } from './AuthOptions';
 import { AppUser } from '@/models/security/AppUser';
-import { TwoFactorVerifier } from '../TwoFactorVerifier';
 import { ServiceRegistry } from '@/ServiceRegistry';
 import { Unauthorized } from '@/exceptions/authErrors/Unauthorized';
 import { ConfigManager } from '@/ConfigManager';
@@ -23,11 +22,10 @@ import { SecurityConfig } from '../SecurityConfig';
 export class AuthService extends BaseService {
 
   private options: AuthOptions;
-  private twoFactorVerifier: TwoFactorVerifier = new TwoFactorVerifier();
 
   constructor(options?: AuthOptions) {
     super();
-    this.options = options || ConfigManager.instance.getOptions(SecurityConfig)?.authOptions;
+    this.options = options || ConfigManager.instance.getOptionsAsClass(SecurityConfig, "SecurityConfig")?.authOptions;
     this.options = this.options || new AuthOptions();
   }
 
@@ -35,7 +33,6 @@ export class AuthService extends BaseService {
   public async loginByPassword (login: string, password: string, unlinkedSocialProfile: SessionUser): Promise<AuthResult> {
     let sessionUser = null;
     const logonResult: AuthResult = new AuthResult();
-    logonResult.makeUnknown();
 
     try {
 
@@ -47,55 +44,55 @@ export class AuthService extends BaseService {
       }
 
       // Проверяем пароль
-      if (bcrypt.compareSync(password, user.appUserPwdHash)) {
-        // Пароль верный (и не вывалилсь в exception)
-
-        // Проверим на блокировку
-        if (user.appUserBlockedInd === 1) {
-          return logonResult.makeBlocked(this.options.userBlockedMessage);
-        }
-
-        // Проверим подтверждение регистрации
-        if (user.appUserRegVerifiedInd !== 1) {
-          return logonResult.makeRegistrationNotConfirmed(this.options.requireRegistrationConfirmationMessage);
-        }
-
-        // Если на клиенте был авторизованный профиль соц.сети - линкуем
-        if (!!unlinkedSocialProfile && unlinkedSocialProfile.userSnProfileId > 0) {
-          unlinkedSocialProfile.appUserId = user.appUserId;
-          const userSocProfile = await ServiceRegistry.instance.getService(AppUserService).linkSessionUserToSocialNetwork(unlinkedSocialProfile.userSnProfileType, unlinkedSocialProfile);
-          if (userSocProfile) {
-            sessionUser = ServiceRegistry.instance.getService(AppUserService).convertAppUserSocialNetProfileToSessionUser(userSocProfile);
-            sessionUser.appUserRegVerifiedInd = user.appUserRegVerifiedInd;
-            sessionUser.appUserRegDate = user.appUserRegDate;
-
-          }
-        }
-
-        // Если не было свзяи с соц.сетью, сессионого пользоваиеля сделаем из регистрации
-        if (!sessionUser) {
-          sessionUser = ServiceRegistry.instance.getService(AppUserService).convertAppUserToSessionUser(user);
-        }
-
-        // Все нормально (пароль валидный).
-        logonResult.newAccessToken = await ServiceRegistry.instance.getService(AppUserSessionService).saveUserSessionAndCreateJwt(sessionUser);
-
-        // Требуется подтверждение по SMS
-        if (this.options.isRequireConfirmationBySms) {
-          // FIXME: Нужны свой поля для признка подтверждения логина
-          user.appUserRegVerifiedInd = 0;
-          user.appUserRegDate = new Date(Date.now()).toUTCString();
-          await ServiceRegistry.instance.getService(AppUserService).save(user);
-
-          this.sendSmsConfirmRegistrationMessage(user);
-          return logonResult.makeRequereConfirmBySmsCode(sessionUser, this.options.requireSmsConfirmationMessage);
-        }
-
-        return logonResult.makeOK(sessionUser, this.options.authOkMessage);
-
-      } else {
+      if (!bcrypt.compareSync(password, user.appUserPwdHash)) {
         return logonResult.makeFailed(this.options.failedMessage);
       }
+
+      // Пароль верный (и не вывалилсь в exception)
+      // Проверим на блокировку
+      if (user.appUserBlockedInd === 1) {
+        return logonResult.makeBlocked(this.options.userBlockedMessage);
+      }
+
+      // FIXME: Нужны свой поля для признка подтверждения логина. И не корректно, так как если не подтвердил, и еще раз захожу - то здесь будет отлуп, так как ниже будет 0 выставлен
+      // Проверим подтверждение регистрации
+      // if (user.appUserRegVerifiedInd !== 1) {
+      //   return logonResult.makeRegistrationNotConfirmed(this.options.requireRegistrationConfirmationMessage);
+      // }
+
+      // Если на клиенте был авторизованный профиль соц.сети - линкуем
+      if (!!unlinkedSocialProfile && unlinkedSocialProfile.userSnProfileId > 0) {
+        unlinkedSocialProfile.appUserId = user.appUserId;
+        const userSocProfile = await ServiceRegistry.instance.getService(AppUserService).linkSessionUserToSocialNetwork(unlinkedSocialProfile.userSnProfileType, unlinkedSocialProfile);
+        if (userSocProfile) {
+          sessionUser = ServiceRegistry.instance.getService(AppUserService).convertAppUserSocialNetProfileToSessionUser(userSocProfile);
+          sessionUser.appUserRegVerifiedInd = user.appUserRegVerifiedInd;
+          sessionUser.appUserRegDate = user.appUserRegDate;
+
+        }
+      }
+
+      // Если не было свзяи с соц.сетью, сессионого пользоваиеля сделаем из регистрации
+      if (!sessionUser) {
+        sessionUser = ServiceRegistry.instance.getService(AppUserService).convertAppUserToSessionUser(user);
+      }
+
+      // Все нормально (пароль валидный).
+      logonResult.newAccessToken = await ServiceRegistry.instance.getService(AppUserSessionService).saveUserSessionAndCreateJwt(sessionUser);
+
+      // Требуется подтверждение по SMS
+      if (this.options.isRequireConfirmationBySms) {
+        // FIXME: Нужны свой поля для признка подтверждения логина
+        user.appUserRegVerifiedInd = 0;
+        user.appUserRegDate = new Date(Date.now()).toUTCString();
+        await ServiceRegistry.instance.getService(AppUserService).save(user);
+
+        this.sendSmsConfirmRegistrationMessage(user);
+        return logonResult.makeRequereConfirmBySmsCode(sessionUser, this.options.requireSmsConfirmationMessage);
+      }
+
+      return logonResult.makeOK(sessionUser, this.options.authOkMessage);
+
     } catch (err) {
       if (err && err.includes && err.includes('BCrypt')) {
         return logonResult.makeFailed(this.options.failedMessage);
@@ -105,6 +102,8 @@ export class AuthService extends BaseService {
         logger.error(err);
         return logonResult;
       }
+    } finally {
+      return logonResult;
     }
   }
 
@@ -112,7 +111,6 @@ export class AuthService extends BaseService {
   // Смена пароля
   public async changePassword (userId: number, newPassword: string) {
     const result: AuthResult = new AuthResult();
-    result.makeUnknown();
 
     // FIXME: Implement this
     // if (!isPasswordStrenght(password)) {
@@ -122,7 +120,13 @@ export class AuthService extends BaseService {
     try {
       const user = await ServiceRegistry.instance.getService(AppUserService).getById(userId);
       if (!!user) {
-        user.appUserPwdHash = bcrypt.hashSync(newPassword, ConfigManager.instance.getOptions(SecurityConfig).registrationOptions.bcryptSaltRounds);
+
+        // Проверим подтверждение регистрации
+        if (user.appUserRegVerifiedInd !== 1) {
+          return result.makeRegistrationNotConfirmed(this.options.requireRegistrationConfirmationMessage);
+        }
+
+        user.appUserPwdHash = bcrypt.hashSync(newPassword, ConfigManager.instance.getOptionsAsClass(SecurityConfig, "SecurityConfig").registrationOptions.bcryptSaltRounds);
         await ServiceRegistry.instance.getService(AppUserService).save(user);
 
         const sessionUser = ServiceRegistry.instance.getService(AppUserService).convertAppUserToSessionUser(user);
@@ -130,10 +134,10 @@ export class AuthService extends BaseService {
         result.makePasswordChanged(sessionUser);
       }
     } catch (err) {
-
+      result.makeError(err);
+    } finally {
+      return result;
     }
-
-    return result;
   }
 
   /// -------------------------------------------------------------------------------------------------
@@ -216,10 +220,18 @@ export class AuthService extends BaseService {
 
   public async confirmLoginByCode (code: number, appUserId: number) {
     const result: AuthResult = new AuthResult();
-    const user = await this.twoFactorVerifier.verifyByCode(code, appUserId);
 
     try {
-      if (!!user) {
+      const user = await ServiceRegistry.instance.getService(AppUserService).getById(appUserId);
+
+      // FIXME:
+      // Проверим подтверждение регистрации
+      // if (!!user && user.appUserRegVerifiedInd !== 1) {
+      // return result.makeRegistrationNotConfirmed(this.options.requireRegistrationConfirmationMessage);
+      // }
+
+      // FIXME: После правки в БД, проверить на истечение время жизни кода
+      if (!!user && user.appUserSmsCode === code) {
         // FIXME: Переименовать это поле - appUserRegVerifiedInd Это проверка кода только для регистрации
         user.appUserRegVerifiedInd = 1;
         user.appUserRegToken = null;
@@ -324,7 +336,7 @@ export class AuthService extends BaseService {
   // Отправка смс - для подтверждения входа
   // FIXME: Также сделать проверку кода по почте
   private async sendSmsConfirmRegistrationMessage (user: AppUser) {
-    user.appUserSmsCode = 77777;
+    user.appUserSmsCode = 1;
     return await ServiceRegistry.instance.getService(AppUserService).save(user);
   }
 }

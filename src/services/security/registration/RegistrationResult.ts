@@ -39,9 +39,4 @@ export class RegistrationResult {
     this.message = message;
     return this;
   }
-
-  public makeUnknown () {
-    this.registrationStatus = RegistrationStatus.Unknown;
-    return this;
-  }
 }

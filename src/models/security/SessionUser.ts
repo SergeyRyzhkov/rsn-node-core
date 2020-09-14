@@ -15,8 +15,4 @@ export class SessionUser {
   public userSnProfileAvatar = '';
   public userSnProfileLink = '';
   public userSnProfileEmail = '';
-
-  public reset = false;
-
-  public roleIdList: number;
 }

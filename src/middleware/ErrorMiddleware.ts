@@ -2,8 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import { logger } from '@/utils/Logger';
 import { ResponseWrapper } from '@/controllers/ResponseWrapper';
 
-// FIXME: Implement
-
 export const errorMiddleware = () => {
   return async (err: any, req: Request, res: Response, next: NextFunction) => {
     logger.error(err.message);

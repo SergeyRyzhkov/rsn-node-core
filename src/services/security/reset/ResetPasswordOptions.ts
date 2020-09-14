@@ -1,11 +1,11 @@
-import { ModuleOptions, ConfigManager } from '@/ConfigManager';
+import { ConfigManager } from '@/ConfigManager';
 import { ExpressConfig } from '@/ExpressConfig';
 import { Exclude } from 'class-transformer';
 
-export class ResetPasswordOptions extends ModuleOptions {
+export class ResetPasswordOptions {
 
     @Exclude()
-    private appConfig = ConfigManager.instance.getOptions(ExpressConfig);
+    private appConfig = ConfigManager.instance.getOptionsAsClass(ExpressConfig, "ExpressConfig");
 
     // Подтверждение пароля по ссылке из письма? Иначе надо будет указать код по смс
     public resetPasswordEmailConfirm = true;

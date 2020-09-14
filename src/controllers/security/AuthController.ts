@@ -7,6 +7,7 @@ import { AuthService } from '@/services/security/auth/AuthService';
 import { temporaryAuthorized, authorized } from '@/middleware/SecurityMiddlewares';
 import { SecurityHelper } from './SecurityHelper';
 import { SessionUser } from '@/models/security/SessionUser';
+import { logger } from '@/utils/Logger';
 
 @JsonController('/auth')
 export class AuthController extends BaseController {
@@ -15,6 +16,16 @@ export class AuthController extends BaseController {
   public async getCurrentSessionUser (
     @Req() request: Request,
     @Res() response: Response,) {
+
+    // FIXME: Убрать - это для тестирования бэка
+
+    try {
+      logger.info("getCurrentSessionUser !!request.cookies = " + !!request.cookies);
+      logger.info("getCurrentSessionUser !!request.cookies = " + JSON.stringify(request.cookies));
+      logger.info("SecurityHelper.getSessionUserFromToken = " + JSON.stringify(SecurityHelper.getSessionUserFromToken(request)));
+    } catch {
+
+    }
 
     // Получим пользователя из токена, но он может еще не прошел проверку по коду (логина или регистрации, если нужна была)
     let sessionUser = SecurityHelper.getSessionUserFromToken(request);

@@ -3,10 +3,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export class ConfigManager {
+    private static _instance: ConfigManager;
 
     private configDir = 'config';
-    private emptyOptions = new ModuleOptions();
-    private static _instance: ConfigManager;
     private optionsMap = new Map();
 
     // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -64,34 +63,21 @@ export class ConfigManager {
         return plainOptionsList;
     }
 
-    public register<T extends ModuleOptions> (ctor: new () => T) {
-        const clazz = new ctor();
-        this.optionsMap.set(ctor.name, clazz);
-        return this;
-    }
-
-    public getOptions<T extends ModuleOptions> (ctor: new () => T): T {
-        let plainObject = this.optionsMap.get(ctor.name);
-        plainObject = plainObject || this.emptyOptions;
+    public getOptionsAsClass<T> (ctor: new () => T, configSection: string): T {
+        const plainObject = this.optionsMap.get(configSection);
         return plainToClass(ctor, plainObject);
     }
 
-    public getOptionsAsPlain<T extends ModuleOptions> (ctor: new () => T): any {
-        const optClass = this.getOptions(ctor);
-        return classToPlain(optClass);
+    public getOptionsAsPlain (configSection: string): any {
+        return this.optionsMap.get(configSection);
     }
 
-    public exists<T extends ModuleOptions> (ctor: new () => T): boolean {
-        return !!this.getOptions(ctor);
+    public exists (configSection: string): boolean {
+        return !!this.optionsMap.get(configSection);
     }
 
     private getConfigFilePath () {
         const fileName = process.env.NODE_ENV === 'development' ? 'dev.config.json' : 'prod.config.json';
         return path.resolve(this.configDir, fileName);
     }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export class ModuleOptions {
-
 }

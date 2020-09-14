@@ -1,6 +1,5 @@
-import { ModuleOptions } from '@/ConfigManager'
 
-export class SmtpOptions extends ModuleOptions {
+export class SmtpOptions {
   host = "smtp.timeweb.ru";
   port = 25;
   from = "inbox@ekoset.ru";

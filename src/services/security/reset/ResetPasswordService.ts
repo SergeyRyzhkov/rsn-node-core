@@ -17,7 +17,7 @@ export class ResetPasswordService extends BaseService {
 
     constructor(options?: ResetPasswordOptions) {
         super();
-        this.options = options || ConfigManager.instance.getOptions(SecurityConfig)?.resetPasswordOptions;
+        this.options = options || ConfigManager.instance.getOptionsAsClass(SecurityConfig, "SecurityConfig")?.resetPasswordOptions;
         this.options = this.options || new ResetPasswordOptions();
     }
 
@@ -46,40 +46,48 @@ export class ResetPasswordService extends BaseService {
     public async confirmResetPasswordByCode (code: string) {
         const result = new ResetPasswordResult();
 
-        // Ищщем пользователя по токену (коду)
-        const appUser = await ServiceRegistry.instance.getService(AppUserService).getByResetPasswordToken(code);
-        if (!appUser) {
-            return result.makeFailed(this.options.resetPasswordUserNotFoundMessage);
-        }
+        try {
+            // Ищщем пользователя по токену (коду)
+            const appUser = await ServiceRegistry.instance.getService(AppUserService).getByResetPasswordToken(code);
+            if (!appUser) {
+                return result.makeFailed(this.options.resetPasswordUserNotFoundMessage);
+            }
 
-        if (appUser.appUserResetPwd !== code) {
-            return result.makeFailed(this.options.resetPasswordInvalidCodeMessage);
-        }
+            if (appUser.appUserResetPwd !== code) {
+                return result.makeFailed(this.options.resetPasswordInvalidCodeMessage);
+            }
 
-        const isExpared = Date.now() - Date.parse(appUser.appUserResetPwdDate) > this.options.resetPasswordLifetimeInSeconds * 1000;
+            const isExpared = Date.now() - Date.parse(appUser.appUserResetPwdDate) > this.options.resetPasswordLifetimeInSeconds * 1000;
 
-        if (isExpared) {
-            appUser.appUserResetPwdDate = null;
+            if (isExpared) {
+                appUser.appUserResetPwdDate = null;
+                appUser.appUserResetPwd = null;
+                await ServiceRegistry.instance.getService(AppUserService).save(appUser);
+                return result.makeResetPasswordExpaired(this.options.resetPasswordExpareddMessage);
+            }
+
+            // Все нормально - создаем
             appUser.appUserResetPwd = null;
+            appUser.appUserResetPwdDate = null;
             await ServiceRegistry.instance.getService(AppUserService).save(appUser);
-            return result.makeResetPasswordExpaired(this.options.resetPasswordExpareddMessage);
+
+            const sessionUser = ServiceRegistry.instance.getService(AppUserService).convertAppUserToSessionUser(appUser);
+            result.newAccessToken = await ServiceRegistry.instance.getService(AppUserSessionService).saveUserSessionAndCreateJwt(sessionUser);
+            result.makeResetPasswordOK(sessionUser, this.options.resetPasswordOKMessage);
+
+        } catch (err) {
+            result.makeFailed(err.message);
         }
-
-        // Все нормально - создаем
-        appUser.appUserResetPwd = null;
-        appUser.appUserResetPwdDate = null;
-        await ServiceRegistry.instance.getService(AppUserService).save(appUser);
-
-        const sessionUser = ServiceRegistry.instance.getService(AppUserService).convertAppUserToSessionUser(appUser);
-        result.newAccessToken = await ServiceRegistry.instance.getService(AppUserSessionService).saveUserSessionAndCreateJwt(sessionUser);
-        result.makeResetPasswordOK(sessionUser, this.options.resetPasswordOKMessage);
+        finally {
+            return result;
+        }
 
     }
 
     // Отправка смс - для сброса пароля
     public async sendSms (user: AppUser) {
         user.appUserResetPwdDate = new Date(Date.now()).toUTCString();
-        user.appUserResetPwd = '77777';
+        user.appUserResetPwd = '1';
         return await ServiceRegistry.instance.getService(AppUserService).save(user);
     }
 
@@ -94,7 +102,7 @@ export class ResetPasswordService extends BaseService {
         }
 
         const message = {
-            from: ConfigManager.instance.getOptions(SmtpOptions).from,
+            from: ConfigManager.instance.getOptionsAsClass(SmtpOptions, "SmtpOptions").from,
             to: user.appUserMail,
             text: '',
             html: '',

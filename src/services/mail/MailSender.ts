@@ -7,13 +7,12 @@ import { SmtpOptions } from './SmtpOptions';
 import Mail from 'nodemailer/lib/mailer';
 import { ConfigManager } from '@/ConfigManager';
 
-// FIXME: Как базовый сервис?
 export class MailSender {
 
   public smtpTransport: Mail;
 
   constructor(options?: SmtpOptions) {
-    const opt = options || ConfigManager.instance.getOptionsAsPlain(SmtpOptions);
+    const opt = options || ConfigManager.instance.getOptionsAsPlain("SmtpOptions");
     this.smtpTransport = nodemailer.createTransport(opt);
   }
 

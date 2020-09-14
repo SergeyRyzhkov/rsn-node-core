@@ -8,10 +8,10 @@ import { SecurityConfig } from '@/services/security/SecurityConfig';
 
 export class SecurityHelper {
 
-    private static securityConfig = ConfigManager.instance.getOptions(SecurityConfig);
+    private static securityConfig = ConfigManager.instance.getOptionsAsClass(SecurityConfig, "SecurityConfig");
 
+    // FIXME: Учитывать remember me
     public static setJWTCookie (res: Response, accessToken: string) {
-        // FIXME: В настройки
         const cookieOptions = {
             expires: new Date(Date.now() + this.securityConfig.refreshTokenAgeInSeconds * 1000),
             httpOnly: true,

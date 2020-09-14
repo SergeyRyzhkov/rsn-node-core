@@ -15,12 +15,6 @@ export class ResetPasswordResult {
   public message: string;
   public newAccessToken: string;
 
-  public makeUnknownResult () {
-    this.status = ResetPasswordStatus.Unknown;
-    return this;
-  }
-
-
   public makeResetPasswordOK (sessionUser: SessionUser, message: string) {
     this.status = ResetPasswordStatus.OK;
     this.sessionUser = sessionUser;

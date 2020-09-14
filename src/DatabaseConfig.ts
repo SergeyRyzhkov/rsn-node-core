@@ -1,6 +1,5 @@
-import { ModuleOptions } from '@/ConfigManager';
 
-export class DatabaseConfig extends ModuleOptions {
+export class DatabaseConfig {
     type = "postgres";
     host = "172.16.3.45";
     port = 5432;

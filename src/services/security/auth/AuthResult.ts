@@ -24,10 +24,6 @@ export class AuthResult {
   public message: string;
   public newAccessToken: string;
 
-  public makeUnknown () {
-    this.logonStatus = LogonStatus.Unknown;
-  }
-
   public makeOK (sessionUser: SessionUser, message: string) {
     this.logonStatus = LogonStatus.OK;
     this.exception = null;

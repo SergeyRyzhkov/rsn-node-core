@@ -13,6 +13,7 @@ export class SmsRuTransport extends SmsTransport {
     this.apiKey = apiKey;
   }
 
+  // FIXME: Обрезать сообщение до 70 символов
   public async send (message: SmsMessage): Promise<SmsResponse> {
     let params = `to=${message.toPhone}&msg=${message.message}`;
 
@@ -45,7 +46,7 @@ export class SmsRuTransport extends SmsTransport {
 
   private doRequest (command: string, params: string) {
     const url = `${this.rootUrl}${command}?api_id=${this.apiKey}&json=1&${params}`;
-    return fetchWrapper.get(url);
+    return fetchWrapper.getJSON(url);
   }
 
 }

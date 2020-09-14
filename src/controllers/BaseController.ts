@@ -19,13 +19,13 @@ export class BaseController {
   }
 
   public createFailureResponse (exc: Exception, res: Response, redirectUrl?: string) {
-    const err = !!exc ? exc : new InternalServerError('Unknown')
+    const err = !!exc ? exc : new InternalServerError(exc.message || 'Unknown');
     const response = ResponseWrapper.createFailure(err, null, redirectUrl);
     return res.status(err.status).json(response);
   }
 
   public createFailureResponseWithMessage (exc: Exception, res: Response, message: ClientNotifyMessage, redirectUrl?: string) {
-    const err = !!exc ? exc : new InternalServerError('Unknown')
+    const err = !!exc ? exc : new InternalServerError(exc.message || 'Unknown');
     const response = ResponseWrapper.createFailure(err, message, redirectUrl);
     return res.status(err.status).json(response);
   }
@@ -37,8 +37,8 @@ export class BaseController {
   }
 }
 
-// FIXME: Rename
-export const sortFilterPaginationFromRequest = (options?: { required?: boolean }) => {
+
+export const sortPaginationFromRequest = (options?: { required?: boolean }) => {
   return createParamDecorator({
     required: options && options.required ? true : false,
     value: (action) => {

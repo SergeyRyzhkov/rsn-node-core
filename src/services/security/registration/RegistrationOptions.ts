@@ -1,11 +1,11 @@
-import { ConfigManager, ModuleOptions } from '@/ConfigManager';
+import { ConfigManager } from '@/ConfigManager';
 import { ExpressConfig } from '@/ExpressConfig';
 import { Exclude } from 'class-transformer';
 
-export class RegistrationOptions extends ModuleOptions {
+export class RegistrationOptions {
 
     @Exclude()
-    private appConfig = ConfigManager.instance.getOptions(ExpressConfig);
+    private appConfig = ConfigManager.instance.getOptionsAsClass(ExpressConfig, "ExpressConfig");
 
     // Для генерации хэша пароля 
     public bcryptSaltRounds = 10;
