@@ -10,6 +10,7 @@ import { SmtpOptions } from '@/services/mail/SmtpOptions';
 import { Guid } from '@/utils/Guid';
 import { MailSender } from '@/services/mail/MailSender';
 import { AppUserSessionService } from '../user/AppUserSessionService';
+import { logger } from '@/utils/Logger';
 
 export class ResetPasswordService extends BaseService {
     private mailSender: MailSender = new MailSender();
@@ -25,16 +26,19 @@ export class ResetPasswordService extends BaseService {
     public async sendResetPasswordMessage (login: string) {
         const result: ResetPasswordResult = new ResetPasswordResult();
 
-        // Ищем пользователя по логину
+        // Ищем пользователя по логину (f)
         const appUser = await ServiceRegistry.instance.getService(AppUserService).getByLogin(login);
 
         if (!appUser) {
-            return result.makeFailed(this.options.resetPasswordUserNotFoundMessage);
+            return result.makeFailed(this.options.resetPasswordInvalidCodeMessage);
         }
 
         if (this.options.resetPasswordEmailConfirm) {
-            await this.sendMail(appUser);
-            return result.makeRequereConfirmBySmsCode(this.options.resetPasswordMailSendMessage);
+            if (await this.sendMail(appUser)) {
+                return result.makeRequereConfirmByEmail(this.options.resetPasswordMailSendMessage);
+            } else {
+                return result.makeFailed(this.options.resetPasswordMailSendFailMessage);
+            }
         } else {
             await this.sendSms(appUser);
             return result.makeRequereConfirmBySmsCode(this.options.resetPasswordSmsSendMessage);
@@ -50,7 +54,7 @@ export class ResetPasswordService extends BaseService {
             // Ищщем пользователя по токену (коду)
             const appUser = await ServiceRegistry.instance.getService(AppUserService).getByResetPasswordToken(code);
             if (!appUser) {
-                return result.makeFailed(this.options.resetPasswordUserNotFoundMessage);
+                return result.makeFailed(this.options.resetPasswordInvalidCodeMessage);
             }
 
             if (appUser.appUserResetPwd !== code) {
@@ -108,7 +112,16 @@ export class ResetPasswordService extends BaseService {
             html: '',
             subject: this.options.resetPasswordMailHeader
         }
-        this.mailSender.sendFromTemplate(message, this.options.resetPasswordMailTemplate, format);
-        return await ServiceRegistry.instance.getService(AppUserService).save(user);
+
+        try {
+            this.mailSender.sendFromTemplate(message, this.options.resetPasswordMailTemplate, format);
+            await ServiceRegistry.instance.getService(AppUserService).save(user);
+            return Promise.resolve(true)
+        }
+        catch (err) {
+            logger.error(err);
+            return Promise.reject(false)
+        }
+
     }
 }

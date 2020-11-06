@@ -38,7 +38,7 @@ class FetchWrapper {
   public async download (url: string, filePath: string, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
     try {
       const result = await this.get(url, options, proxy);
-      await streamPipeline(result.body, fs.createWriteStream(filePath));
+      await streamPipeline(result.data, fs.createWriteStream(filePath));
       Promise.resolve(result);
     }
     catch (err) {
@@ -50,25 +50,27 @@ class FetchWrapper {
     return this.putOrPostOrPatch(url, method, options, createReadStream(filePath));
   }
 
-  public async put (url: string, options?: any, body?: ArrayBuffer | ArrayBufferView | NodeJS.ReadableStream | string | URLSearchParams | FormData, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
-    return this.putOrPostOrPatch('PUT', url, options, body, proxy);
+  public async put (url: string, options?: any, data?: ArrayBuffer | ArrayBufferView | NodeJS.ReadableStream | string | URLSearchParams | FormData, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
+    return this.putOrPostOrPatch('PUT', url, options, data, proxy);
   }
 
-  public async post (url: string, options?: any, body?: ArrayBuffer | ArrayBufferView | NodeJS.ReadableStream | string | URLSearchParams | FormData, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
-    return this.putOrPostOrPatch('POST', url, options, body, proxy);
+  public async post (url: string, options?: any, data?: ArrayBuffer | ArrayBufferView | NodeJS.ReadableStream | string | URLSearchParams | FormData, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
+    return this.putOrPostOrPatch('POST', url, options, data, proxy);
   }
 
-  public async patch (url: string, options?: any, body?: ArrayBuffer | ArrayBufferView | NodeJS.ReadableStream | string | URLSearchParams | FormData, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
-    return this.putOrPostOrPatch('PATCH', url, options, body, proxy);
+  public async patch (url: string, options?: any, data?: ArrayBuffer | ArrayBufferView | NodeJS.ReadableStream | string | URLSearchParams | FormData, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
+    return this.putOrPostOrPatch('PATCH', url, options, data, proxy);
   }
 
+  //FIXME: поменять местами формдата и опции
+  //FIXME:хидер верный?
   public async postForm (url: string, formData: FormData, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
-    const conf = {
-      headers: {
-        'Content-Type': 'multipart/form-data'
+    options.headers = {
+      ...options.headers, ...{
+        'Content-Type': 'application/json'
       }
     }
-    return this.putOrPostOrPatch('POST', url, { ...options, ...conf }, formData, proxy);
+    return this.putOrPostOrPatch('POST', url, { ...options }, formData, proxy);
   }
 
   public async delete (url: string, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
@@ -82,10 +84,10 @@ class FetchWrapper {
   }
 
   private putOrPostOrPatch (method: string, url: string, options?: any,
-    body?: ArrayBuffer | ArrayBufferView | NodeJS.ReadableStream | string | URLSearchParams | FormData,
+    data?: ArrayBuffer | ArrayBufferView | NodeJS.ReadableStream | string | URLSearchParams | FormData,
     proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }) {
 
-    const mergedOptions = { ...options, ...{ method }, ... { body } };
+    const mergedOptions = { ...options, ...{ method }, ... { body: data } };
     const res = this.doFetch(url, mergedOptions, proxy);
     return this.processRequest(res);
   }
@@ -94,10 +96,6 @@ class FetchWrapper {
   private doFetch (url: string, options?: any, proxy?: { proxyProtocol: string, proxyIpAddress: string, proxyPort: number }): Promise<Response> {
     const defaultOptions: any = {
       timeout: 5000,
-      // headers: {
-      //   'Accept': 'text/html,application/json,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      //   'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:72.0) Gecko/20100101 Firefox/72.0' + Math.random().toString()
-      // },
       follow: 9
     }
 
@@ -115,7 +113,8 @@ class FetchWrapper {
   }
 
 
-  private async processRequest (fetchResult: Promise<Response>, getDataFn?: (response: Response) => any): Promise<{ data: any, status: number, statusText: string, headers: Headers, body: NodeJS.ReadableStream }> {
+  // FIXME:надо нормальное сообщение сделать при ошибке, см. клиент
+  private async processRequest (fetchResult: Promise<Response>, getDataFn?: (response: Response) => any): Promise<{ data: any, status: number, statusText: string, headers: Headers }> {
     const response: any = {}
     try {
       const result = await fetchResult;
@@ -124,7 +123,6 @@ class FetchWrapper {
       response.status = result.status;
       response.statusText = result.statusText;
       response.headers = result.headers;
-      response.body = result.body
 
       if (!result.ok || result.status > 399) {
         return Promise.reject(response);

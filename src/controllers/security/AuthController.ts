@@ -7,7 +7,6 @@ import { AuthService } from '@/services/security/auth/AuthService';
 import { temporaryAuthorized, authorized } from '@/middleware/SecurityMiddlewares';
 import { SecurityHelper } from './SecurityHelper';
 import { SessionUser } from '@/models/security/SessionUser';
-import { logger } from '@/utils/Logger';
 
 @JsonController('/auth')
 export class AuthController extends BaseController {
@@ -16,16 +15,6 @@ export class AuthController extends BaseController {
   public async getCurrentSessionUser (
     @Req() request: Request,
     @Res() response: Response,) {
-
-    // FIXME: Убрать - это для тестирования бэка
-
-    try {
-      logger.info("getCurrentSessionUser !!request.cookies = " + !!request.cookies);
-      logger.info("getCurrentSessionUser !!request.cookies = " + JSON.stringify(request.cookies));
-      logger.info("SecurityHelper.getSessionUserFromToken = " + JSON.stringify(SecurityHelper.getSessionUserFromToken(request)));
-    } catch {
-
-    }
 
     // Получим пользователя из токена, но он может еще не прошел проверку по коду (логина или регистрации, если нужна была)
     let sessionUser = SecurityHelper.getSessionUserFromToken(request);
@@ -39,23 +28,25 @@ export class AuthController extends BaseController {
     @Req() request: Request,
     @Res() response: Response,
     @BodyParam('login') login: string,
-    @BodyParam('password') password: string) {
+    @BodyParam('password') password: string,
+    @BodyParam('rememberMe') rememberMe?: boolean,
+    @BodyParam('unlinkedSocialUser') unlinkedSocialUser?: SessionUser) {
 
     // чистим куку с токеном
     SecurityHelper.clearJWTCookie(response);
 
     try {
 
-      const logonResult = await ServiceRegistry.instance.getService(AuthService).loginByPassword(login, password, request.body.unlinkedSocialUser);
+      const logonResult = await ServiceRegistry.instance.getService(AuthService).loginByPassword(login, password, unlinkedSocialUser);
 
       // Выставляем куку с токеном
       if (logonResult.logonStatus === LogonStatus.OK) {
-        SecurityHelper.setJWTCookie(response, logonResult.newAccessToken);
+        SecurityHelper.setJWTCookie(response, logonResult.newAccessToken, rememberMe);
       }
 
       // Если требуется подтверждение по SMS, то сбрасываем юзверя (на клиенте должен быть выставлен ананимус), будем ждать подтверждения
       if (logonResult.logonStatus === LogonStatus.RequereConfirmBySmsCode) {
-        SecurityHelper.setJWTCookie(response, logonResult.newAccessToken);
+        SecurityHelper.setJWTCookie(response, logonResult.newAccessToken, false);
         delete logonResult.sessionUser;
       }
 

@@ -1,6 +1,5 @@
 import { createConnection, EntityManager, getManager } from 'typeorm';
 import { ConfigManager } from '@/ConfigManager'
-import { DatabaseConfig } from '../DatabaseConfig';
 
 export class TypeOrmManager {
 

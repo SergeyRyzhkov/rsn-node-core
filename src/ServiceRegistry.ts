@@ -1,5 +1,4 @@
 import { BaseService } from './services/BaseService';
-import { logger } from './utils/Logger';
 
 export class ServiceRegistry {
 
@@ -9,7 +8,6 @@ export class ServiceRegistry {
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   private constructor() {
-    logger.info("ServiceRegistry.constructor ");
   }
 
   public getServiseMap () {

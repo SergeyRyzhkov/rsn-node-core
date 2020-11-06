@@ -44,15 +44,15 @@ const {
 
 
 let config = {
-  node: {
-    setImmediate: false,
-    process: 'mock',
-    dgram: 'empty',
-    fs: 'empty',
-    net: 'empty',
-    tls: 'empty',
-    child_process: 'empty'
-  },
+  // node: {
+  //   setImmediate: false,
+  //   process: 'mock',
+  //   dgram: 'empty',
+  //   fs: 'empty',
+  //   net: 'empty',
+  //   tls: 'empty',
+  //   child_process: 'empty'
+  // },
 
   resolve: {
     extensions: ['.js', '.ts', '.tsx', '.jsx', '.json', 'sass', 'css', 'vue'],

@@ -4,6 +4,7 @@ import { SignOptions } from 'jsonwebtoken';
 import { ResetPasswordOptions } from './reset/ResetPasswordOptions';
 
 export class SecurityConfig {
+    public cookieDomain = ".example.com"
     public jwtCookieName = "auth-rsn-cookie";
     public jwtSecretKey = "gostorgiryzhkov1976";
     public jwtSignOptions: SignOptions = {

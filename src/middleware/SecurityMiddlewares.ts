@@ -3,7 +3,6 @@ import { ServiceRegistry } from '@/ServiceRegistry';
 import { AuthService } from '@/services/security/auth/AuthService';
 import { Unauthorized } from '@/exceptions/authErrors/Unauthorized';
 import { SecurityHelper } from '@/controllers/security/SecurityHelper';
-import { ForbiddenException } from '@/exceptions/authErrors/ForbiddenException';
 
 export const authorized = (errorMessage?: string) => {
   return async (req: Request, res: Response, next: NextFunction) => {

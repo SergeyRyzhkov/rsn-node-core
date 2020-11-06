@@ -110,6 +110,7 @@ export class AppUserService extends BaseService {
     const result = new SessionUser();
     result.appUserId = appUser.appUserId;
     result.appUserName = !!appUser.appUserMail ? appUser.appUserMail : appUser.appUserPhone;
+    result.appUserName = !!result.appUserName ? result.appUserName : appUser.appUserLogin;
     result.appUserRegVerifiedInd = appUser.appUserRegVerifiedInd;
     result.appUserRegDate = appUser.appUserRegDate;
     return result;

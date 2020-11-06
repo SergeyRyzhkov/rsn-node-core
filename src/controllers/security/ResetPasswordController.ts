@@ -36,8 +36,6 @@ export class ResetPasswordController extends BaseController {
 
         SecurityHelper.clearJWTCookie(response);
 
-        // FIXME: Cannot read property 'status' of undefined
-
         try {
             const result: ResetPasswordResult = await ServiceRegistry.instance.getService(ResetPasswordService).confirmResetPasswordByCode(code);
             // Выставляем куку с токеном

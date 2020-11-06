@@ -14,7 +14,7 @@ export class ResetPasswordOptions {
     public resetPasswordUrl = `${this.appConfig.host}${this.appConfig.restApiBaseUrl}/user/password/reset/confirm`;
 
     // Заголовок в email 
-    public resetPasswordMailHeader = 'Подтверждение регистрации';
+    public resetPasswordMailHeader = 'Сброс пароля';
 
     // Наименование шаблона (в папке mail) email 
     public resetPasswordMailTemplate = 'reset_password';
@@ -25,10 +25,7 @@ export class ResetPasswordOptions {
     // Врекмя жизни ссылки по почте для подтверждения регистрации
     public resetPasswordLifetimeInSeconds = 24 * 60 * 60;
 
-    // Сообщение если пользователь с логином не найден
-    public resetPasswordUserNotFoundMessage = 'Неверный логин пользователя';
-
-    // Сообщение если пользователь с логином не найден
+    // Сообщение если пользователь с логином не найден или неверный код
     public resetPasswordInvalidCodeMessage = 'Неверно указан код';
 
     // Сообщение если время жизни токена для восстановления вышло
@@ -36,6 +33,9 @@ export class ResetPasswordOptions {
 
     // Сообщение после отправки письма
     public resetPasswordMailSendMessage = 'На почтовый ящик отправлено письмо с инструкциями для восстановления пароля';
+
+    // Сообщение если ошибка отправки письма
+    public resetPasswordMailSendFailMessage = 'Не удалось отправить почтовое сообщние';
 
     // Сообщение после отправки смс кода
     public resetPasswordSmsSendMessage = 'Введите SMS код';

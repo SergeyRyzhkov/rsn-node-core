@@ -269,7 +269,7 @@ export class AuthService extends BaseService {
       return accessToken;
     } catch (error) {
 
-      // В JWT нет рефреш-токена
+      // В JWT нет access-токена
       const sessionToken = JWTHelper.getJwtId(accessToken);
       if (!sessionToken) {
         throw new InvalidTokenException('Invalid refresh token');

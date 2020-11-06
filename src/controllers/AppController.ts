@@ -1,11 +1,11 @@
 import { BaseController } from './BaseController';
 import { Response } from 'express';
-import { JsonController, Get, Res, getMetadataArgsStorage, UseBefore } from 'routing-controllers';
+import { JsonController, Get, Res, getMetadataArgsStorage, UseBefore, Put, Req, Body } from 'routing-controllers';
 import { routingControllersToSpec } from 'routing-controllers-openapi'
 import { authorized } from '@/middleware/SecurityMiddlewares';
 import { ConfigManager } from '@/ConfigManager';
 import { ExpressConfig } from '@/ExpressConfig';
-import { fetchWrapper } from '@/utils/fetchWrapper'
+import { logger } from '@/utils/Logger';
 
 @JsonController('/app')
 export class AppController extends BaseController {
@@ -32,11 +32,20 @@ export class AppController extends BaseController {
     return this.createSuccessResponse(config, response);
   }
 
-  // @UseBefore(authorized())
-  // @Get('/config')
-  // public async downloadLog (@Res() response: Response) {
-  //   fetchWrapper.download()
-  // }
+  @Put('/log')
+  public async log (
+    @Res() response: Response,
+    @Body() message: any
+  ) {
 
+    try {
+      logger.info(JSON.stringify(message));
+    }
+    catch  {
+      logger.error('AppController cannot write log');
+    }
+    return this.createSuccessResponse({}, response);
+  }
 }
+
 
