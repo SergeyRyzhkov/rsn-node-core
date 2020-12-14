@@ -13,13 +13,16 @@ export class SecurityHelper {
     public static setJWTCookie (res: Response, accessToken: string, rememberMe = true) {
         const cookieOptions: any = {};
 
-        cookieOptions.domain = this.securityConfig.cookieDomain;
-        cookieOptions.httpOnly = true;
+        if (!!this.securityConfig.cookieDomain) {
+            cookieOptions.domain = this.securityConfig.cookieDomain;
+        }
+        //   cookieOptions.httpOnly = true;
         cookieOptions.secure = res.app.get('env') === 'production';
 
-        if (rememberMe === true) {
-            cookieOptions.expires = new Date(Date.now() + this.securityConfig.refreshTokenAgeInSeconds * 1000);
-        }
+        //  if (rememberMe === true) {
+        cookieOptions.expires = new Date(Date.now() + this.securityConfig.refreshTokenAgeInSeconds * 1000);
+        cookieOptions.maxAge = this.securityConfig.refreshTokenAgeInSeconds * 1000;
+        //}
 
         if (!accessToken) {
             this.clearJWTCookie(res);
@@ -34,12 +37,12 @@ export class SecurityHelper {
 
 
     public static getAccessToken (req: Request) {
-        return req.cookies[this.securityConfig.jwtCookieName];
+        return req.cookies ? req.cookies[this.securityConfig.jwtCookieName] : null;
     }
 
     public static getSessionUserFromToken (req: Request): SessionUser {
         let sessionUser = SessionUser.anonymousUser
-        const token = this.getAccessToken(req);
+        const token = req.cookies ? req.cookies[this.securityConfig.jwtCookieName] : null;
         if (!!token) {
             sessionUser = JWTHelper.getTokenUser(token);
         }

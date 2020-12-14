@@ -132,6 +132,8 @@ export class AuthService extends BaseService {
         const sessionUser = ServiceRegistry.instance.getService(AppUserService).convertAppUserToSessionUser(user);
         result.newAccessToken = await ServiceRegistry.instance.getService(AppUserSessionService).saveUserSessionAndCreateJwt(sessionUser);
         result.makePasswordChanged(sessionUser);
+      } else {
+        result.makeFailed();
       }
     } catch (err) {
       result.makeError(err);

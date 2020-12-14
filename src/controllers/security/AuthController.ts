@@ -19,7 +19,6 @@ export class AuthController extends BaseController {
     // Получим пользователя из токена, но он может еще не прошел проверку по коду (логина или регистрации, если нужна была)
     let sessionUser = SecurityHelper.getSessionUserFromToken(request);
     sessionUser = ServiceRegistry.instance.getService(AuthService).isUserAuthorized(sessionUser) ? sessionUser : SessionUser.anonymousUser;
-
     return this.createSuccessResponse(sessionUser, response);
   }
 
