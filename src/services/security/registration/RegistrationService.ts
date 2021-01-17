@@ -4,7 +4,7 @@ import { ServiceRegistry } from '@/ServiceRegistry';
 import { AppUserService } from '../user/AppUserService';
 import { AppUser } from '@/models/security/AppUser';
 import { logger } from '@/utils/Logger';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { RegistrationOptions } from './RegistrationOptions';
 import { MailSender } from '@/services/mail/MailSender';
 import { Guid } from '@/utils/Guid';

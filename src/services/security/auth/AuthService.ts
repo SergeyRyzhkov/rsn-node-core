@@ -1,6 +1,6 @@
 import { logger } from '@/utils/Logger';
 import { BaseService } from '../../BaseService';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { InternalServerError } from '@/exceptions/serverErrors/InternalServerError';
 import { AuthResult } from './AuthResult';
 import { AppUserSessionService } from '../user/AppUserSessionService';

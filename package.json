@@ -15,9 +15,7 @@
     "lint": "npm run lint:all"
   },
   "devDependencies": {
-    "@types/bcrypt": "3.0.0",
     "@types/express": "latest",
-    "@types/helmet": "latest",
     "@types/jsonwebtoken": "^8.3.7",
     "@types/multer": "latest",
     "@types/node-fetch": "latest",
@@ -40,7 +38,8 @@
     "webpack-node-externals": "latest"
   },
   "dependencies": {
-    "bcrypt": "3.0.6",
+    "@types/bcryptjs": "^2.4.4",
+    "bcryptjs": "latest",
     "body-parser": "latest",
     "camelcase-keys": "latest",
     "class-transformer": "latest",
@@ -51,6 +50,7 @@
     "express": "latest",
     "express-validator": "latest",
     "helmet": "latest",
+    "hpp": "latest",
     "http-proxy-agent": "latest",
     "https-proxy-agent": "latest",
     "jsonwebtoken": "latest",
@@ -65,7 +65,6 @@
     "routing-controllers-openapi": "latest",
     "typeorm": "latest",
     "winston": "latest",
-    "xss-clean": "latest",
-    "hpp": "latest"
+    "xss-clean": "latest"
   }
 }
