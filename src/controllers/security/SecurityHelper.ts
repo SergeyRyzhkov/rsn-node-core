@@ -16,8 +16,11 @@ export class SecurityHelper {
         if (!!this.securityConfig.cookieDomain) {
             cookieOptions.domain = this.securityConfig.cookieDomain;
         }
+
         //   cookieOptions.httpOnly = true;
-        cookieOptions.secure = res.app.get('env') === 'production';
+        if (this.securityConfig.cookieSecure) {
+            cookieOptions.secure = res.app.get('env') === 'production';
+        }
 
         //  if (rememberMe === true) {
         cookieOptions.expires = new Date(Date.now() + this.securityConfig.refreshTokenAgeInSeconds * 1000);
