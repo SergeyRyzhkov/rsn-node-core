@@ -3,7 +3,7 @@ import { SmsResponse } from './SmsResponse';
 
 export abstract class SmsTransport {
 
-  public abstract async send (message: SmsMessage): Promise<SmsResponse>;
+  public abstract  send (message: SmsMessage): Promise<SmsResponse>;
 
 }
 
