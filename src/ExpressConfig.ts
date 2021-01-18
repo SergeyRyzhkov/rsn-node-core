@@ -4,7 +4,6 @@ export class ExpressConfig {
     host = "http://localhost:3003";
     restApiBaseUrl = "/api/2_0";
     bodyParserLimit = "50mb";
-
     useCors = true;
     corsOptions = {
         credentials: true,

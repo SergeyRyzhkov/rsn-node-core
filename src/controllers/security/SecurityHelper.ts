@@ -17,15 +17,15 @@ export class SecurityHelper {
             cookieOptions.domain = this.securityConfig.cookieDomain;
         }
 
-        //   cookieOptions.httpOnly = true;
+        cookieOptions.httpOnly = true;
         if (this.securityConfig.cookieSecure) {
             cookieOptions.secure = res.app.get('env') === 'production';
         }
 
-        //  if (rememberMe === true) {
-        cookieOptions.expires = new Date(Date.now() + this.securityConfig.refreshTokenAgeInSeconds * 1000);
-        cookieOptions.maxAge = this.securityConfig.refreshTokenAgeInSeconds * 1000;
-        //}
+        if (rememberMe === true) {
+            cookieOptions.expires = new Date(Date.now() + this.securityConfig.refreshTokenAgeInSeconds * 1000);
+            cookieOptions.maxAge = this.securityConfig.refreshTokenAgeInSeconds * 1000;
+        }
 
         if (!accessToken) {
             this.clearJWTCookie(res);
@@ -40,12 +40,16 @@ export class SecurityHelper {
 
 
     public static getAccessToken (req: Request) {
-        return req.cookies ? req.cookies[this.securityConfig.jwtCookieName] : null;
+        const tokenHeader = req.get('x-access-token') || req.get('authorization');
+        if (tokenHeader && tokenHeader.startsWith('Bearer ')) {
+            return tokenHeader.slice(7, tokenHeader.length);
+        }
+        return null;
     }
 
     public static getSessionUserFromToken (req: Request): SessionUser {
-        let sessionUser = SessionUser.anonymousUser
-        const token = req.cookies ? req.cookies[this.securityConfig.jwtCookieName] : null;
+        let sessionUser = SessionUser.anonymousUser;
+        const token = this.getAccessToken(req);
         if (!!token) {
             sessionUser = JWTHelper.getTokenUser(token);
         }
@@ -59,5 +63,9 @@ export class SecurityHelper {
     // Юзверь залогинился, но еще не подтвердил регистрацию кодом или логин кодом
     public static isUserTemporaryAuthorized (req: Request) {
         return ServiceRegistry.instance.getService(AuthService).isUserTemporaryAuthorized(this.getSessionUserFromToken(req));
+    }
+
+    public static setCurrentUserAnonymous (res: Response) {
+        this.clearJWTCookie(res);
     }
 }

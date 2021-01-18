@@ -107,7 +107,7 @@ export class ResetPasswordService extends BaseService {
 
         const message = {
             from: ConfigManager.instance.getOptionsAsClass(SmtpOptions, "SmtpOptions").from,
-            to: user.appUserMail,
+            to: !!user.appUserMail ? user.appUserMail : user.appUserLogin,
             text: '',
             html: '',
             subject: this.options.resetPasswordMailHeader

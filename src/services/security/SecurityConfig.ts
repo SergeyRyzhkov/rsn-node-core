@@ -4,6 +4,7 @@ import { SignOptions } from 'jsonwebtoken';
 import { ResetPasswordOptions } from './reset/ResetPasswordOptions';
 
 export class SecurityConfig {
+    public jwtHeaderName = "Auth-Access-Token";
     public cookieDomain = ".example.com";
     public cookieSecure = true;
     public jwtCookieName = "auth-rsn-cookie";

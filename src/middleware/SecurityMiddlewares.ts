@@ -62,7 +62,7 @@ export const verifyUpdateAccessToken = () => {
         const newAccessToken = await ServiceRegistry.instance.getService(AuthService).verifyUpdateAccessToken(jwt);
         SecurityHelper.setJWTCookie(res, newAccessToken);
       } catch (err) {
-        SecurityHelper.clearJWTCookie(res);
+        SecurityHelper.setCurrentUserAnonymous(res);
       }
     }
 

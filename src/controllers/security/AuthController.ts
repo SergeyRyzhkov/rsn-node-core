@@ -31,21 +31,19 @@ export class AuthController extends BaseController {
     @BodyParam('rememberMe') rememberMe?: boolean,
     @BodyParam('unlinkedSocialUser') unlinkedSocialUser?: SessionUser) {
 
-    // чистим куку с токеном
-    SecurityHelper.clearJWTCookie(response);
+    SecurityHelper.setCurrentUserAnonymous(response);
 
     try {
 
       const logonResult = await ServiceRegistry.instance.getService(AuthService).loginByPassword(login, password, unlinkedSocialUser);
 
-      // Выставляем куку с токеном
       if (logonResult.logonStatus === LogonStatus.OK) {
         SecurityHelper.setJWTCookie(response, logonResult.newAccessToken, rememberMe);
       }
 
       // Если требуется подтверждение по SMS, то сбрасываем юзверя (на клиенте должен быть выставлен ананимус), будем ждать подтверждения
       if (logonResult.logonStatus === LogonStatus.RequereConfirmBySmsCode) {
-        SecurityHelper.setJWTCookie(response, logonResult.newAccessToken, false);
+        SecurityHelper.setJWTCookie(response, logonResult.newAccessToken);
         delete logonResult.sessionUser;
       }
 
@@ -95,7 +93,7 @@ export class AuthController extends BaseController {
       const userId = SecurityHelper.getSessionUserFromToken(request)?.appUserId
       await ServiceRegistry.instance.getService(AuthService).logout(userId);
 
-      SecurityHelper.clearJWTCookie(response);
+      SecurityHelper.setCurrentUserAnonymous(response);
 
       return this.createSuccessResponse({}, response);
     } catch (err) {

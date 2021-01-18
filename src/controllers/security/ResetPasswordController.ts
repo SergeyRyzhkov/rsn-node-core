@@ -15,7 +15,7 @@ export class ResetPasswordController extends BaseController {
         @Req() request: Request,
         @Res() response: Response) {
 
-        SecurityHelper.clearJWTCookie(response);
+        SecurityHelper.setCurrentUserAnonymous(response);
 
         try {
             const result: ResetPasswordResult = await ServiceRegistry.instance.getService(ResetPasswordService).sendResetPasswordMessage(login);
@@ -34,11 +34,10 @@ export class ResetPasswordController extends BaseController {
         @Req() request: Request,
         @Res() response: Response) {
 
-        SecurityHelper.clearJWTCookie(response);
+        SecurityHelper.setCurrentUserAnonymous(response);
 
         try {
             const result: ResetPasswordResult = await ServiceRegistry.instance.getService(ResetPasswordService).confirmResetPasswordByCode(code);
-            // Выставляем куку с токеном
             if (result.status === ResetPasswordStatus.OK) {
                 SecurityHelper.setJWTCookie(response, result.newAccessToken);
             }

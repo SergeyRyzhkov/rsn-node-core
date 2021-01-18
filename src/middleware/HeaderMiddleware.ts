@@ -1,13 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 
-export const headerMiddleware = () => {
+export const headerMiddleware = (jwtHeaderName: string) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    // res.header('Access-Control-Allow-Methods', 'OPTIONS,GET,HEAD,PATCH,POST,DELETE,PUT');
-    // if (AppConfig.authConfig) {
-    //   // res.header('Access-Control-Allow-Headers', 'Origin, Content-Type, X-Requested-With, Accept, Authorization,' + AppConfig.authConfig.jwtHeaderName);
-    //   // res.header('Access-Control-Expose-Headers', AppConfig.authConfig.jwtHeaderName);
-    //   res.header('Access-Control-Allow-Headers', 'Origin, Content-Type, X-Requested-With, Accept, Authorization');
-    // }
+    res.header('Access-Control-Allow-Methods', 'OPTIONS,GET,HEAD,PATCH,POST,DELETE,PUT');
+    res.header('Access-Control-Allow-Headers', `Origin, Content-Type, X-Requested-With, Accept, Authorization,${jwtHeaderName}`);
+    res.header('Access-Control-Expose-Headers', jwtHeaderName);
     next();
   }
 }

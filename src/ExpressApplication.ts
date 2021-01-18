@@ -28,7 +28,7 @@ import { ResetPasswordService } from './services/security/reset/ResetPasswordSer
 import { AppUser } from './models/security/AppUser';
 import { AppUserSession } from './models/security/AppUserSession';
 import { AppUserSocialNetProfile } from './models/security/AppUserSocialNetProfile';
-import { SecurityConfig } from './services/security/SecurityConfig';
+import { headerMiddleware, SecurityConfig } from '.';
 
 // FIXME: Было бы удобно еще регистрировать массив сервисов
 
@@ -117,6 +117,10 @@ export class ExpressApplication {
     }
 
     if (ConfigManager.instance.exists("SecurityConfig")) {
+
+      const secConfig = ConfigManager.instance.getOptionsAsClass(SecurityConfig, "SecurityConfig");
+
+      this.app.use(headerMiddleware(secConfig.jwtHeaderName));
       this.app.use(verifyUpdateAccessToken());
 
       ServiceRegistry.instance.register(AppUserService).
@@ -146,5 +150,3 @@ export class ExpressApplication {
     return this;
   }
 }
-
-

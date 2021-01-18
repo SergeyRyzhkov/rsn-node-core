@@ -1,6 +1,6 @@
 {
   "name": "rsn-express-core",
-  "version": "2.3.8",
+  "version": "2.3.9",
   "description": "Sergey Ryzhkov(s) core Express (node) platform",
   "main": "index.js",
   "repository": "git@github.com:SergeyRyzhkov/rsn-node-core",
@@ -38,7 +38,7 @@
     "webpack-node-externals": "latest"
   },
   "dependencies": {
-    "@types/bcryptjs": "^2.4.4",
+    "@types/bcryptjs": "latest",
     "bcryptjs": "latest",
     "body-parser": "latest",
     "camelcase-keys": "latest",

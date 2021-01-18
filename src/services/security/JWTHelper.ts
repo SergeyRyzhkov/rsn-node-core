@@ -3,7 +3,6 @@ import { plainToClass } from 'class-transformer';
 import { SessionUser } from '../../models/security/SessionUser';
 import { ConfigManager } from '@/ConfigManager';
 import { SecurityConfig } from './SecurityConfig';
-import { logger } from '@/utils/Logger';
 
 export class JWTHelper {
 

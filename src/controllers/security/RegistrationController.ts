@@ -17,8 +17,7 @@ export class RegistrationController extends BaseController {
         @Req() request: Request,
         @Res() response: Response) {
 
-        // чистим куку с токеном
-        SecurityHelper.clearJWTCookie(response);
+        SecurityHelper.setCurrentUserAnonymous(response);
 
         try {
 
@@ -51,7 +50,7 @@ export class RegistrationController extends BaseController {
         @Req() request: Request,
         @Res() response: Response) {
 
-        SecurityHelper.clearJWTCookie(response);
+        SecurityHelper.setCurrentUserAnonymous(response);
 
         try {
             const result = await ServiceRegistry.instance.getService(RegistrationService).confirmRegistrationByEmail(token);
