@@ -1,6 +1,7 @@
 import { Exception } from '@/exceptions/Exception';
 import { ClientNotifyMessage } from './ClientNotifyMessage';
 
+// FIXME: Может не нужен класс? (экономть память)
 export class ResponseWrapper {
 
   public static createSuccsess (data: any, status = 200, message?: ClientNotifyMessage, redirectUrl?: string): ResponseWrapper {
