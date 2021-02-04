@@ -28,7 +28,8 @@ import { ResetPasswordService } from './services/security/reset/ResetPasswordSer
 import { AppUser } from './models/security/AppUser';
 import { AppUserSession } from './models/security/AppUserSession';
 import { AppUserSocialNetProfile } from './models/security/AppUserSocialNetProfile';
-import { headerMiddleware, SecurityConfig } from '.';
+import { SecurityConfig } from './services/security/SecurityConfig';
+import { headerMiddleware } from './middleware/HeaderMiddleware';
 
 // FIXME: Было бы удобно еще регистрировать массив сервисов
 

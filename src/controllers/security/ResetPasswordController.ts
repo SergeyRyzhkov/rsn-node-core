@@ -39,7 +39,7 @@ export class ResetPasswordController extends BaseController {
         try {
             const result: ResetPasswordResult = await ServiceRegistry.instance.getService(ResetPasswordService).confirmResetPasswordByCode(code);
             if (result.status === ResetPasswordStatus.OK) {
-                SecurityHelper.setJWTCookie(response, result.newAccessToken);
+                SecurityHelper.setJWTHeader(response, result.newAccessToken);
             }
 
             delete result.newAccessToken;

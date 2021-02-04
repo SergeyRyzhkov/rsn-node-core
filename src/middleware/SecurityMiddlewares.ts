@@ -1,31 +1,29 @@
-import { Request, Response, NextFunction } from 'express';
-import { ServiceRegistry } from '@/ServiceRegistry';
-import { AuthService } from '@/services/security/auth/AuthService';
-import { Unauthorized } from '@/exceptions/authErrors/Unauthorized';
-import { SecurityHelper } from '@/controllers/security/SecurityHelper';
+import { Request, Response, NextFunction } from "express";
+import { ServiceRegistry } from "@/ServiceRegistry";
+import { AuthService } from "@/services/security/auth/AuthService";
+import { Unauthorized } from "@/exceptions/authErrors/Unauthorized";
+import { SecurityHelper } from "@/controllers/security/SecurityHelper";
 
 export const authorized = (errorMessage?: string) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    if (!SecurityHelper.isUserAuthorized(req)) {
-      next(new Unauthorized(errorMessage));
-    } else {
-      next();
-    }
-  }
-}
-
+    return (req: Request, res: Response, next: NextFunction) => {
+        if (!SecurityHelper.isUserAuthorized(req)) {
+            next(new Unauthorized(errorMessage));
+        } else {
+            next();
+        }
+    };
+};
 
 // Юзверь залогинился, но еще не подтвердил регистрацию кодом или логин кодом
 export const temporaryAuthorized = (errorMessage?: string) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    if (!SecurityHelper.isUserTemporaryAuthorized(req)) {
-      next(new Unauthorized(errorMessage));
-    } else {
-      next();
-    }
-  }
-}
-
+    return (req: Request, res: Response, next: NextFunction) => {
+        if (!SecurityHelper.isUserTemporaryAuthorized(req)) {
+            next(new Unauthorized(errorMessage));
+        } else {
+            next();
+        }
+    };
+};
 
 // // FIXME: Исправить на массив ролей у юзверя
 // export const permit = (...allowedRoles: number[]) => {
@@ -53,19 +51,20 @@ export const temporaryAuthorized = (errorMessage?: string) => {
 // }
 
 export const verifyUpdateAccessToken = () => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+        const jwt = SecurityHelper.getAccessTokenFromHeader(req);
 
-    const jwt = SecurityHelper.getAccessToken(req);
+        if (!!jwt) {
+            try {
+                const newAccessToken = await ServiceRegistry.instance.getService(AuthService).verifyUpdateAccessToken(jwt);
+                SecurityHelper.setJWTHeader(res, newAccessToken);
+            } catch (err) {
+                SecurityHelper.setCurrentUserAnonymous(res);
+            }
+        } else {
+            SecurityHelper.setCurrentUserAnonymous(res);
+        }
 
-    if (!!jwt) {
-      try {
-        const newAccessToken = await ServiceRegistry.instance.getService(AuthService).verifyUpdateAccessToken(jwt);
-        SecurityHelper.setJWTCookie(res, newAccessToken);
-      } catch (err) {
-        SecurityHelper.setCurrentUserAnonymous(res);
-      }
-    }
-
-    next();
-  }
-}
+        next();
+    };
+};
