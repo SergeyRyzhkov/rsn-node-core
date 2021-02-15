@@ -19,7 +19,6 @@
 // import { SecurityConfig } from './services/security/SecurityConfig';
 // import { postgresWrapper } from './utils/PostgresWrapper';
 
-
 // export class TestApp {
 
 //     public async start () {
@@ -44,5 +43,4 @@
 // }
 // )()
 
-export class TestApp {
-}
+export class TestApp {}

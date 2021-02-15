@@ -62,8 +62,6 @@ export class SecurityHelper {
 
     // Вспомнить меня. В куке должен быть юзвер и старый access token
     public static async getLogonResultFromCookie(req: Request): Promise<AuthResult> {
-        logger.error(req.cookies[this.securityConfig.jwtCookieName]);
-
         const logonResult: AuthResult = new AuthResult();
         try {
             if (!!req.cookies) {

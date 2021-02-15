@@ -3,6 +3,7 @@ import { ServiceRegistry } from "@/ServiceRegistry";
 import { AuthService } from "@/services/security/auth/AuthService";
 import { Unauthorized } from "@/exceptions/authErrors/Unauthorized";
 import { SecurityHelper } from "@/controllers/security/SecurityHelper";
+import { logger } from "@/utils/Logger";
 
 export const authorized = (errorMessage?: string) => {
     return (req: Request, res: Response, next: NextFunction) => {
@@ -59,6 +60,7 @@ export const verifyUpdateAccessToken = () => {
                 const newAccessToken = await ServiceRegistry.instance.getService(AuthService).verifyUpdateAccessToken(jwt);
                 SecurityHelper.setJWTHeader(res, newAccessToken);
             } catch (err) {
+                logger.error(err);
                 SecurityHelper.setCurrentUserAnonymous(res);
             }
         } else {

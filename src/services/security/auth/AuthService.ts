@@ -304,13 +304,13 @@ export class AuthService extends BaseService {
                 .getService(AppUserSessionService)
                 .getByToken(sessionToken);
             if (!session) {
-                throw new UserSessionExpiredException("Session not found");
+                throw new UserSessionExpiredException("Session not found: sessionToken = " + sessionToken);
             }
 
             // Истекло время жизни сессии (рефреш токена)
             if (ServiceRegistry.instance.getService(AppUserSessionService).isExpired(session)) {
                 ServiceRegistry.instance.getService(AppUserSessionService).deleteAllByUser(sessionToken);
-                throw new UserSessionExpiredException("Session is expired");
+                throw new UserSessionExpiredException("Session is expired: sessionToken = " + sessionToken);
             }
 
             // Все проверки проши и истекло время жизни Access токена - увеличиваем дату окончания сессии и меняем id сессии (рефреш токен)
@@ -321,8 +321,10 @@ export class AuthService extends BaseService {
 
             // Ошибка в токене в принципе (невалидна подпись и т.д.)
             if (error instanceof JsonWebTokenError) {
-                throw new InvalidTokenException("Invalid access token");
+                throw new InvalidTokenException("Invalid access token: sessionToken = " + sessionToken);
             }
+
+            logger.error("verifyUpdateAccessToken - дошли вниз: sessionToken = " + sessionToken);
 
             // Выше не вернули токен новый, значит что-то не так, чистим все сессии пользователя
             ServiceRegistry.instance.getService(AppUserSessionService).deleteAllByUser(session.appUserId);

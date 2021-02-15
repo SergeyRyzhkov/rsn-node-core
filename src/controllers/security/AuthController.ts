@@ -17,6 +17,9 @@ export class AuthController extends BaseController {
         if (logonResult.logonStatus === LogonStatus.OK) {
             SecurityHelper.setJWTHeader(response, logonResult.newAccessToken);
             SecurityHelper.setRemeberMeCookie(response, logonResult.newAccessToken);
+        } else {
+            SecurityHelper.setCurrentUserAnonymous(response);
+            SecurityHelper.clearRemeberMeCookie(response);
         }
 
         delete logonResult.newAccessToken;
@@ -45,6 +48,8 @@ export class AuthController extends BaseController {
 
                 if (rememberMe) {
                     SecurityHelper.setRemeberMeCookie(response, logonResult.newAccessToken);
+                } else {
+                    SecurityHelper.clearRemeberMeCookie(response);
                 }
             }
 
