@@ -1,6 +1,6 @@
 {
   "name": "rsn-express-core",
-  "version": "2.6.3",
+  "version": "2.9.5",
   "description": "Sergey Ryzhkov(s) core Express (node) platform",
   "main": "index.js",
   "repository": "git@github.com:SergeyRyzhkov/rsn-node-core",
@@ -59,7 +59,7 @@
     "node-fetch": "latest",
     "nodemailer": "^6.4.17",
     "pg": "latest",
-    "pg-promise": "^10.9.2",
+    "pg-promise": "latest",
     "reflect-metadata": "latest",
     "routing-controllers": "latest",
     "routing-controllers-openapi": "latest",

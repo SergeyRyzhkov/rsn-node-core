@@ -7,9 +7,27 @@ import { AuthService } from "@/services/security/auth/AuthService";
 import { temporaryAuthorized, authorized } from "@/middleware/SecurityMiddlewares";
 import { SecurityHelper } from "./SecurityHelper";
 import { SessionUser } from "@/models/security/SessionUser";
+import { AppUserService } from "@/services/security/user/AppUserService";
+import { logger } from "@/utils/Logger";
 
 @JsonController("/auth")
 export class AuthController extends BaseController {
+    @UseBefore(authorized())
+    @Get("/sessionuser/:id")
+    public async getSesionuserById(@Req() request: Request, @Res() response: Response, @Param("id") appUserId: number) {
+        let sessUser = SessionUser.anonymousUser;
+        try {
+            const appUser = await ServiceRegistry.instance.getService(AppUserService).getById(appUserId);
+            if (!!appUser) {
+                sessUser = ServiceRegistry.instance.getService(AppUserService).convertAppUserToSessionUser(appUser);
+            }
+        } catch (err) {
+            logger.error(err);
+        } finally {
+            return this.createSuccessResponse(sessUser, response);
+        }
+    }
+
     @Get("/me")
     public async getMeFromCookie(@Req() request: Request, @Res() response: Response) {
         const logonResult = await SecurityHelper.getLogonResultFromCookie(request);
@@ -37,30 +55,24 @@ export class AuthController extends BaseController {
         @BodyParam("unlinkedSocialUser") unlinkedSocialUser?: SessionUser
     ) {
         SecurityHelper.setCurrentUserAnonymous(response);
-
         try {
             const logonResult = await ServiceRegistry.instance
                 .getService(AuthService)
                 .loginByPassword(login, password, unlinkedSocialUser);
-
             if (logonResult.logonStatus === LogonStatus.OK) {
                 SecurityHelper.setJWTHeader(response, logonResult.newAccessToken);
-
                 if (rememberMe) {
                     SecurityHelper.setRemeberMeCookie(response, logonResult.newAccessToken);
                 } else {
                     SecurityHelper.clearRemeberMeCookie(response);
                 }
             }
-
             // Если требуется подтверждение по SMS, то сбрасываем юзверя (на клиенте должен быть выставлен ананимус), будем ждать подтверждения
             if (logonResult.logonStatus === LogonStatus.RequereConfirmBySmsCode) {
                 SecurityHelper.setJWTHeader(response, logonResult.newAccessToken);
                 delete logonResult.sessionUser;
             }
-
             delete logonResult.newAccessToken;
-
             return this.createSuccessResponse(logonResult, response);
         } catch (err) {
             const result = new AuthResult();
@@ -117,7 +129,6 @@ export class AuthController extends BaseController {
             }
 
             delete result.newAccessToken;
-
             return this.createSuccessResponse(result, response);
         } catch (err) {
             return this.createFailureResponse(err, response);

@@ -7,6 +7,7 @@ import { ConfigManager } from "@/ConfigManager";
 import { SecurityConfig } from "@/services/security/SecurityConfig";
 import { AuthResult } from "@/services/security/auth/AuthResult";
 import { logger } from "@/utils/Logger";
+import { AppUserService } from "@/services/security/user/AppUserService";
 
 export class SecurityHelper {
     private static securityConfig = ConfigManager.instance.getOptionsAsClass(SecurityConfig, "SecurityConfig");
@@ -68,9 +69,24 @@ export class SecurityHelper {
                 const token = req.cookies[this.securityConfig.jwtCookieName];
                 if (!!token) {
                     const sessionUser = JWTHelper.getTokenUser(token);
-                    const newAccessToken = await ServiceRegistry.instance.getService(AuthService).verifyUpdateAccessToken(token);
-                    logonResult.newAccessToken = newAccessToken;
-                    logonResult.makeOK(sessionUser, "");
+                    if (!!sessionUser) {
+                        const newAccessToken = await ServiceRegistry.instance
+                            .getService(AuthService)
+                            .verifyUpdateAccessToken(token);
+
+                        const appUser = await ServiceRegistry.instance.getService(AppUserService).getById(sessionUser.appUserId);
+
+                        if (appUser.appUserBlockedInd === 1) {
+                            logonResult.makeBlocked(this.securityConfig.authOptions.userBlockedMessage);
+                        } else {
+                            const updatedSessionUser = ServiceRegistry.instance
+                                .getService(AppUserService)
+                                .convertAppUserToSessionUser(appUser);
+
+                            logonResult.newAccessToken = newAccessToken;
+                            logonResult.makeOK(updatedSessionUser, "");
+                        }
+                    }
                 }
             }
         } catch (err) {

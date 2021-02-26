@@ -7,11 +7,12 @@ export class SessionUser {
     public appUserRegDate: string;
     public appUserRegVerifiedInd: number;
 
-    public userSnProfileId = 0;
-    public userSnProfileType = "";
-    public userSnProfileNick = "";
-    public userSnProfileAvatar = "";
-    public userSnProfileLink = "";
-    public userSnProfileEmail = "";
+    // public userSnProfileId = 0;
+    // public userSnProfileType = "";
+    // public userSnProfileNick = "";
+    // public userSnProfileAvatar = "";
+    // public userSnProfileLink = "";
+    // public userSnProfileEmail = "";
     public appUserAdminInd = false;
+    public appUserPermissions;
 }

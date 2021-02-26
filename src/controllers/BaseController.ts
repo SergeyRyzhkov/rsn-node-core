@@ -37,7 +37,7 @@ export class BaseController {
     // FIXME: Порт и url
     public createRedirectResponse(response: Response, location: string) {
         const loc = process.env.NODE_ENV === "development" ? `https://dom.npobaltros.ru/` : location;
-        return this.createSuccessResponse({}, response.location(loc), 302);
+        return this.createSuccessResponse({}, response.location(loc), 301);
     }
 }
 

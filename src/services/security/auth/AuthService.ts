@@ -59,19 +59,19 @@ export class AuthService extends BaseService {
             // }
 
             // Если на клиенте был авторизованный профиль соц.сети - линкуем
-            if (!!unlinkedSocialProfile && unlinkedSocialProfile.userSnProfileId > 0) {
-                unlinkedSocialProfile.appUserId = user.appUserId;
-                const userSocProfile = await ServiceRegistry.instance
-                    .getService(AppUserService)
-                    .linkSessionUserToSocialNetwork(unlinkedSocialProfile.userSnProfileType, unlinkedSocialProfile);
-                if (userSocProfile) {
-                    sessionUser = ServiceRegistry.instance
-                        .getService(AppUserService)
-                        .convertAppUserSocialNetProfileToSessionUser(userSocProfile);
-                    sessionUser.appUserRegVerifiedInd = user.appUserRegVerifiedInd;
-                    sessionUser.appUserRegDate = user.appUserRegDate;
-                }
-            }
+            // if (!!unlinkedSocialProfile && unlinkedSocialProfile.userSnProfileId > 0) {
+            //     unlinkedSocialProfile.appUserId = user.appUserId;
+            //     const userSocProfile = await ServiceRegistry.instance
+            //         .getService(AppUserService)
+            //         .linkSessionUserToSocialNetwork(unlinkedSocialProfile.userSnProfileType, unlinkedSocialProfile);
+            //     if (userSocProfile) {
+            //         sessionUser = ServiceRegistry.instance
+            //             .getService(AppUserService)
+            //             .convertAppUserSocialNetProfileToSessionUser(userSocProfile);
+            //         sessionUser.appUserRegVerifiedInd = user.appUserRegVerifiedInd;
+            //         sessionUser.appUserRegDate = user.appUserRegDate;
+            //     }
+            // }
 
             // Если не было свзяи с соц.сетью, сессионого пользоваиеля сделаем из регистрации
             if (!sessionUser) {
@@ -313,7 +313,7 @@ export class AuthService extends BaseService {
                 throw new UserSessionExpiredException("Session is expired: sessionToken = " + sessionToken);
             }
 
-            // Все проверки проши и истекло время жизни Access токена - увеличиваем дату окончания сессии и меняем id сессии (рефреш токен)
+            // Все проверки проши и истекло время жизни Access токена - увеличиваем дату окончания сессии и НЕ меняем id сессии (рефреш токен)
             if (error instanceof TokenExpiredError) {
                 const newSession = await ServiceRegistry.instance.getService(AppUserSessionService).refreshSession(session);
                 return JWTHelper.createAndSignJwt(tokenUser, newSession.userSessionToken);
@@ -323,8 +323,6 @@ export class AuthService extends BaseService {
             if (error instanceof JsonWebTokenError) {
                 throw new InvalidTokenException("Invalid access token: sessionToken = " + sessionToken);
             }
-
-            logger.error("verifyUpdateAccessToken - дошли вниз: sessionToken = " + sessionToken);
 
             // Выше не вернули токен новый, значит что-то не так, чистим все сессии пользователя
             ServiceRegistry.instance.getService(AppUserSessionService).deleteAllByUser(session.appUserId);

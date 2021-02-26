@@ -81,4 +81,7 @@ export class AppUser {
 
     @Column({ name: "app_user_admin_ind" })
     public appUserAdminInd: boolean;
+
+    @Column({ name: "app_user_permissions" })
+    public appUserPermissions: string;
 }

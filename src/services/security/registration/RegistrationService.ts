@@ -64,18 +64,18 @@ export class RegistrationService extends BaseService {
             await userService.save(newAppUser);
 
             // Если на клиенте был авторизованный профиль соц.сети - линкуем
-            if (!!unlinkedSocialProfile && unlinkedSocialProfile.userSnProfileId > 0) {
-                unlinkedSocialProfile.appUserId = newAppUser.appUserId;
-                const userSocProfile = await userService.linkSessionUserToSocialNetwork(
-                    unlinkedSocialProfile.userSnProfileType,
-                    unlinkedSocialProfile
-                );
-                if (!!userSocProfile) {
-                    sessionUser = userService.convertAppUserSocialNetProfileToSessionUser(userSocProfile);
-                    sessionUser.appUserRegVerifiedInd = newAppUser.appUserRegVerifiedInd;
-                    sessionUser.appUserRegDate = newAppUser.appUserRegDate;
-                }
-            }
+            // if (!!unlinkedSocialProfile && unlinkedSocialProfile.userSnProfileId > 0) {
+            //     unlinkedSocialProfile.appUserId = newAppUser.appUserId;
+            //     const userSocProfile = await userService.linkSessionUserToSocialNetwork(
+            //         unlinkedSocialProfile.userSnProfileType,
+            //         unlinkedSocialProfile
+            //     );
+            //     if (!!userSocProfile) {
+            //         sessionUser = userService.convertAppUserSocialNetProfileToSessionUser(userSocProfile);
+            //         sessionUser.appUserRegVerifiedInd = newAppUser.appUserRegVerifiedInd;
+            //         sessionUser.appUserRegDate = newAppUser.appUserRegDate;
+            //     }
+            // }
 
             // Если не было свзяи с соц.сетью, сессионого пользоваиеля сделаем из регистрации
             if (!sessionUser) {
